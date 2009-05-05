@@ -16,6 +16,8 @@
 "				Added a:predicateDescription to distinguish
 "				between no matches and no suitable matches in
 "				error message. 
+"				Implemented [count] number of search
+"				repetitions. 
 "	001	05-May-2009	Split off generic function from
 "				SearchWithoutClosedFolds.vim. 
 "				file creation
@@ -30,7 +32,7 @@ function! s:WrapMessage( message )
 	call EchoWithoutScrolling#Echo( '/' . @/ )
     endif
 endfunction
-function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescription )
+function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescription, count )
 "*******************************************************************************
 "* PURPOSE:
 "   Search for the next match of the current search pattern (@/), skipping all
@@ -50,39 +52,58 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 "			    empty, this is included in the error message when no
 "			    suitable matches were found. E.g. "outside closed
 "			    folds". 
+"   a:count	    Number of search repetitions, as in the [count]n command. 
 "
 "* RETURN VALUES: 
 "   0 if pattern not found, 1 if a suitable match was found and jumped to. 
 "*******************************************************************************
     let l:save_cursor = getpos('.')
-    let [l:prevLine, l:prevCol] = [line('.'), col('.')]
-    let [l:firstMatchLine, l:firstMatchCol] = [0, 0]
-    let l:line = 0
 
-    while l:line == 0 || ! call(a:Predicate, [a:isBackward])
-	" Search for next match, 'wrapscan' applies. 
-	let [l:line, l:col] = searchpos( @/, (a:isBackward ? 'b' : '') )
-	if l:line == 0
-	    " There are no (more) matches. 
-	    break
-	elseif [l:firstMatchLine, l:firstMatchCol] == [0, 0]
-	    " Record the first match to avoid endless loop. 
-	    let [l:firstMatchLine, l:firstMatchCol] = [l:line, l:col]
-	elseif [l:firstMatchLine, l:firstMatchCol] == [l:line, l:col]
-	    " We've already encountered this match; this means that there is at
-	    " least one match, but the predicate is never true: All matches
-	    " should be skipped.  
-	    let l:line = -1
-	    call setpos('.', l:save_cursor)
+    let l:count = a:count
+    let l:isWrapped = 0
+
+    while l:count > 0
+	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
+	let [l:firstMatchLine, l:firstMatchCol] = [0, 0]
+	let l:line = 0
+	while l:line == 0 || ! call(a:Predicate, [a:isBackward])
+	    " Search for next match, 'wrapscan' applies. 
+	    let [l:line, l:col] = searchpos( @/, (a:isBackward ? 'b' : '') )
+	    if l:line == 0
+		" There are no (more) matches. 
+		break
+	    elseif [l:firstMatchLine, l:firstMatchCol] == [0, 0]
+		" Record the first match to avoid endless loop. 
+		let [l:firstMatchLine, l:firstMatchCol] = [l:line, l:col]
+	    elseif [l:firstMatchLine, l:firstMatchCol] == [l:line, l:col]
+		" We've already encountered this match; this means that there is at
+		" least one match, but the predicate is never true: All matches
+		" should be skipped.  
+		let l:line = -1
+		call setpos('.', l:save_cursor)
+		break
+	    endif
+	endwhile
+	if l:line > 0
+	    " We found a suitable match. 
+	    let l:count -= 1
+
+	    " Note: No need to check 'wrapscan'; the wrapping can only occur if
+	    " 'wrapscan' is actually on. 
+	    if ! a:isBackward && (l:prevLine > l:line || l:prevLine == l:line && l:prevCol >= l:col)
+		let l:isWrapped = 1
+	    elseif a:isBackward && (l:prevLine < l:line || l:prevLine == l:line && l:prevCol <= l:col)
+		let l:isWrapped = -1
+	    endif
+	else
 	    break
 	endif
     endwhile
+
     if l:line > 0
-	" Note: No need to check 'wrapscan'; the wrapping can only occur if
-	" 'wrapscan' is actually on. 
-	if ! a:isBackward && (l:prevLine > l:line || l:prevLine == l:line && l:prevCol >= l:col)
+	if l:isWrapped == 1
 	    call s:WrapMessage('search hit BOTTOM, continuing at TOP')
-	elseif a:isBackward && (l:prevLine < l:line || l:prevLine == l:line && l:prevCol <= l:col)
+	elseif l:isWrapped == -1
 	    call s:WrapMessage('search hit TOP, continuing at BOTTOM')
 	else
 	    call EchoWithoutScrolling#Echo( '/' . @/ )
