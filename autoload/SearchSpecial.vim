@@ -32,6 +32,13 @@ function! s:WrapMessage( message )
 	call EchoWithoutScrolling#Echo( '/' . @/ )
     endif
 endfunction
+function! s:ErrorMessage( ... )
+    echohl ErrorMsg
+    let v:errmsg = (a:0 > 0 && ! empty(a:1) ? a:1 : 'E486: Pattern not found: ' . @/)
+    echomsg v:errmsg
+    echohl None
+endfunction
+
 function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescription, count )
 "*******************************************************************************
 "* PURPOSE:
@@ -101,6 +108,8 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
     endwhile
 
     if l:line > 0
+	normal! zv
+
 	if l:isWrapped == 1
 	    call s:WrapMessage('search hit BOTTOM, continuing at TOP')
 	elseif l:isWrapped == -1
@@ -108,16 +117,14 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 	else
 	    call EchoWithoutScrolling#Echo( '/' . @/ )
 	endif
+
 	return 1
     else
-	echohl ErrorMsg
 	if l:line < 0 && ! empty(a:predicateDescription)
-	    let v:errmsg = 'Pattern not found ' . a:predicateDescription . ': ' . @/
+	    call s:ErrorMessage('Pattern not found ' . a:predicateDescription . ': ' . @/)
 	else
-	    let v:errmsg = 'E486: Pattern not found: ' . @/
+	    call s:ErrorMessage()
 	endif
-	echomsg v:errmsg
-	echohl None
 	return 0
     endif
 endfunction
