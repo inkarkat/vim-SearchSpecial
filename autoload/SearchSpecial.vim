@@ -9,6 +9,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	003	07-May-2009	The view (especially the horizontal window view)
+"				may have been changed by moving to unsuitable
+"				matches. Save and restore the original view. 
 "	002	05-May-2009	BF: Endless loop when there are matches, but the
 "				predicate is never true. Now checking against
 "				first match and restoring cursor position if the
@@ -68,6 +71,7 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 
     let l:count = a:count
     let l:isWrapped = 0
+    let l:save_view = winsaveview()
 
     while l:count > 0
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
@@ -118,6 +122,17 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 	    call EchoWithoutScrolling#Echo( '/' . @/ )
 	endif
 
+	" The view (especially the horizontal window view) may have been changed
+	" by moving to unsuitable matches. This may irritate the user, who is
+	" not aware that the implementation also searched invisible parts of the
+	" buffer. 
+	" To fix that, we memorize the match position, restore the view to the
+	" state before the search, then jump straight back to the match
+	" position. 
+	let l:matchPosition = getpos('.')
+	call winrestview(l:save_view)
+	call setpos('.', l:matchPosition)
+
 	return 1
     else
 	if l:line < 0 && ! empty(a:predicateDescription)
@@ -125,6 +140,11 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 	else
 	    call s:ErrorMessage()
 	endif
+
+	" The view may have been changed by moving through unsuitable matches.
+	" Restore the view to the state before the search. 
+	call winrestview(l:save_view)
+
 	return 0
     endif
 endfunction
