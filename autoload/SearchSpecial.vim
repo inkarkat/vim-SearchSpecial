@@ -9,6 +9,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	004	15-May-2009	BF: Translating line breaks in search pattern
+"				via EchoWithoutScrolling#TranslateLineBreaks()
+"				to avoid echoing only the last part of the
+"				search pattern when it contains line breaks. 
 "	003	07-May-2009	The view (especially the horizontal window view)
 "				may have been changed by moving to unsuitable
 "				matches. Save and restore the original view. 
@@ -32,7 +36,7 @@ function! s:WrapMessage( message )
 	echomsg v:warningmsg
 	echohl None
     else
-	call EchoWithoutScrolling#Echo( '/' . @/ )
+	call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . @/))
     endif
 endfunction
 function! s:ErrorMessage( ... )
@@ -119,7 +123,7 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 	elseif l:isWrapped == -1
 	    call s:WrapMessage('search hit TOP, continuing at BOTTOM')
 	else
-	    call EchoWithoutScrolling#Echo( '/' . @/ )
+	    call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . @/))
 	endif
 
 	" The view (especially the horizontal window view) may have been changed
