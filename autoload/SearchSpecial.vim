@@ -9,6 +9,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	005	30-May-2009	Changed interface to allow reuse by
+"				SearchAlternateStar.vim: Removed hardcoded @/;
+"				a:searchPattern must now be passed in. 
 "	004	15-May-2009	BF: Translating line breaks in search pattern
 "				via EchoWithoutScrolling#TranslateLineBreaks()
 "				to avoid echoing only the last part of the
@@ -29,27 +32,29 @@
 "				SearchWithoutClosedFolds.vim. 
 "				file creation
 
-function! s:WrapMessage( message )
+function! s:WrapMessage( searchPattern, message )
     if &shortmess !~# 's'
 	echohl WarningMsg
 	let v:warningmsg = a:message
 	echomsg v:warningmsg
 	echohl None
     else
-	call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . @/))
+	call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . a:searchPattern))
     endif
 endfunction
-function! s:ErrorMessage( ... )
+function! s:ErrorMessage( searchPattern, ... )
+    " No need for EchoWithoutScrolling#TranslateLineBreaks() here, :echomsg
+    " translates everything on its own. 
     echohl ErrorMsg
-    let v:errmsg = (a:0 > 0 && ! empty(a:1) ? a:1 : 'E486: Pattern not found: ' . @/)
+    let v:errmsg = (a:0 > 0 && ! empty(a:1) ? a:1 : 'E486: Pattern not found: ' . a:searchPattern )
     echomsg v:errmsg
     echohl None
 endfunction
 
-function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescription, count )
+function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateDescription, count )
 "*******************************************************************************
 "* PURPOSE:
-"   Search for the next match of the current search pattern (@/), skipping all
+"   Search for the next match of the a:searchPattern, skipping all
 "   those matches where a:Predicate returns false. 
 "
 "* ASSUMPTIONS / PRECONDITIONS:
@@ -58,6 +63,7 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 "   Positions cursor on the next match. 
 "
 "* INPUTS:
+"   a:searchPattern Regular expression to search for. 
 "   a:isBackward    Flag whether to do backward search. 
 "   a:Predicate	    Function reference that is called on each match location;
 "		    must take a Boolean isBackward argument and return whether
@@ -83,7 +89,7 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 	let l:line = 0
 	while l:line == 0 || ! call(a:Predicate, [a:isBackward])
 	    " Search for next match, 'wrapscan' applies. 
-	    let [l:line, l:col] = searchpos( @/, (a:isBackward ? 'b' : '') )
+	    let [l:line, l:col] = searchpos( a:searchPattern, (a:isBackward ? 'b' : '') )
 	    if l:line == 0
 		" There are no (more) matches. 
 		break
@@ -119,11 +125,11 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 	normal! zv
 
 	if l:isWrapped == 1
-	    call s:WrapMessage('search hit BOTTOM, continuing at TOP')
+	    call s:WrapMessage(a:searchPattern, 'search hit BOTTOM, continuing at TOP')
 	elseif l:isWrapped == -1
-	    call s:WrapMessage('search hit TOP, continuing at BOTTOM')
+	    call s:WrapMessage(a:searchPattern, 'search hit TOP, continuing at BOTTOM')
 	else
-	    call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . @/))
+	    call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . a:searchPattern))
 	endif
 
 	" The view (especially the horizontal window view) may have been changed
@@ -140,9 +146,9 @@ function! SearchSpecial#SearchWithout( isBackward, Predicate, predicateDescripti
 	return 1
     else
 	if l:line < 0 && ! empty(a:predicateDescription)
-	    call s:ErrorMessage('Pattern not found ' . a:predicateDescription . ': ' . @/)
+	    call s:ErrorMessage(a:searchPattern, 'Pattern not found ' . a:predicateDescription . ': ' . a:searchPattern)
 	else
-	    call s:ErrorMessage()
+	    call s:ErrorMessage(a:searchPattern)
 	endif
 
 	" The view may have been changed by moving through unsuitable matches.
