@@ -12,6 +12,9 @@
 "	005	30-May-2009	Changed interface to allow reuse by
 "				SearchAlternateStar.vim: Removed hardcoded @/;
 "				a:searchPattern must now be passed in. 
+"				Changed interface to add (optional) predicateId for
+"				easy identification of the current special
+"				search type. 
 "	004	15-May-2009	BF: Translating line breaks in search pattern
 "				via EchoWithoutScrolling#TranslateLineBreaks()
 "				to avoid echoing only the last part of the
@@ -32,14 +35,28 @@
 "				SearchWithoutClosedFolds.vim. 
 "				file creation
 
-function! s:WrapMessage( searchPattern, message )
+function! s:EchoPredicateId( predicateId )
+    echohl SearchSpecialSearchType
+    echo a:predicateId
+    echohl None
+endfunction
+function! s:EchoSearchPattern( predicateId, searchPattern )
+    if empty(a:predicateId)
+	call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . a:searchPattern))
+    else
+	call s:EchoPredicateId(a:predicateId)
+	echon EchoWithoutScrolling#Truncate(EchoWithoutScrolling#TranslateLineBreaks('/' . a:searchPattern), strlen(a:predicateId))
+    endif
+endfunction
+
+function! s:WrapMessage( predicateId, searchPattern, message )
     if &shortmess !~# 's'
 	echohl WarningMsg
-	let v:warningmsg = a:message
+	let v:warningmsg = a:predicateId . ' ' . a:message
 	echomsg v:warningmsg
 	echohl None
     else
-	call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . a:searchPattern))
+	call s:EchoSearchPattern(a:predicateId, a:searchPattern)
     endif
 endfunction
 function! s:ErrorMessage( searchPattern, ... )
@@ -51,7 +68,7 @@ function! s:ErrorMessage( searchPattern, ... )
     echohl None
 endfunction
 
-function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateDescription, count )
+function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateId, predicateDescription, count )
 "*******************************************************************************
 "* PURPOSE:
 "   Search for the next match of the a:searchPattern, skipping all
@@ -68,6 +85,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "   a:Predicate	    Function reference that is called on each match location;
 "		    must take a Boolean isBackward argument and return whether
 "		    the match should be included. 
+"   a:predicateId   Identifier text for the predicate selection. If not empty,
+"		    this is prepended to echo'ed search pattern, wrap and error
+"		    messages (to indicate the current type of special search). 
 "   a:predicateDescription  Text describing the predicate selector. If not
 "			    empty, this is included in the error message when no
 "			    suitable matches were found. E.g. "outside closed
@@ -125,11 +145,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	normal! zv
 
 	if l:isWrapped == 1
-	    call s:WrapMessage(a:searchPattern, 'search hit BOTTOM, continuing at TOP')
+	    call s:WrapMessage(a:predicateId, a:searchPattern, 'search hit BOTTOM, continuing at TOP')
 	elseif l:isWrapped == -1
-	    call s:WrapMessage(a:searchPattern, 'search hit TOP, continuing at BOTTOM')
+	    call s:WrapMessage(a:predicateId, a:searchPattern, 'search hit TOP, continuing at BOTTOM')
 	else
-	    call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . a:searchPattern))
+	    call s:EchoSearchPattern(a:predicateId, a:searchPattern)
 	endif
 
 	" The view (especially the horizontal window view) may have been changed
