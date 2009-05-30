@@ -15,6 +15,8 @@
 "				Changed interface to add (optional) predicateId for
 "				easy identification of the current special
 "				search type. 
+"				BF: Search pattern was always echo'ed with /
+"				indicator; now using ? for backward search. 
 "	004	15-May-2009	BF: Translating line breaks in search pattern
 "				via EchoWithoutScrolling#TranslateLineBreaks()
 "				to avoid echoing only the last part of the
@@ -40,23 +42,24 @@ function! s:EchoPredicateId( predicateId )
     echo a:predicateId
     echohl None
 endfunction
-function! s:EchoSearchPattern( predicateId, searchPattern )
+function! s:EchoSearchPattern( predicateId, searchPattern, isBackward )
+    let l:searchIndicator = (a:isBackward ? '?' : '/')
     if empty(a:predicateId)
-	call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks('/' . a:searchPattern))
+	call EchoWithoutScrolling#Echo(EchoWithoutScrolling#TranslateLineBreaks(l:searchIndicator . a:searchPattern))
     else
 	call s:EchoPredicateId(a:predicateId)
-	echon EchoWithoutScrolling#Truncate(EchoWithoutScrolling#TranslateLineBreaks('/' . a:searchPattern), strlen(a:predicateId))
+	echon EchoWithoutScrolling#Truncate(EchoWithoutScrolling#TranslateLineBreaks(l:searchIndicator . a:searchPattern), strlen(a:predicateId))
     endif
 endfunction
 
-function! s:WrapMessage( predicateId, searchPattern, message )
+function! s:WrapMessage( predicateId, searchPattern, isBackward, message )
     if &shortmess !~# 's'
 	echohl WarningMsg
 	let v:warningmsg = a:predicateId . ' ' . a:message
 	echomsg v:warningmsg
 	echohl None
     else
-	call s:EchoSearchPattern(a:predicateId, a:searchPattern)
+	call s:EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
     endif
 endfunction
 function! s:ErrorMessage( searchPattern, ... )
@@ -145,11 +148,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	normal! zv
 
 	if l:isWrapped == 1
-	    call s:WrapMessage(a:predicateId, a:searchPattern, 'search hit BOTTOM, continuing at TOP')
+	    call s:WrapMessage(a:predicateId, a:searchPattern, a:isBackward, 'search hit BOTTOM, continuing at TOP')
 	elseif l:isWrapped == -1
-	    call s:WrapMessage(a:predicateId, a:searchPattern, 'search hit TOP, continuing at BOTTOM')
+	    call s:WrapMessage(a:predicateId, a:searchPattern, a:isBackward, 'search hit TOP, continuing at BOTTOM')
 	else
-	    call s:EchoSearchPattern(a:predicateId, a:searchPattern)
+	    call s:EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
 	endif
 
 	" The view (especially the horizontal window view) may have been changed
