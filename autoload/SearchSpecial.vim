@@ -9,6 +9,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	006	31-May-2009	Message to SearchSpecial#WrapMessage() is now
+"				optional; the canonical one is generated from
+"				a:isBackward. Streamlined
+"				SearchSpecial#ErrorMessage() interface. 
 "	005	30-May-2009	Changed interface to allow reuse by
 "				SearchAlternateStar.vim: Removed hardcoded @/;
 "				a:searchPattern must now be passed in. 
@@ -17,8 +21,9 @@
 "				search type. 
 "				BF: Search pattern was always echo'ed with /
 "				indicator; now using ? for backward search. 
-"				Exposing SearchSpecial#EchoSearchPattern() and
-"				SearchSpecial#WrapMessage(). 
+"				Exposing SearchSpecial#EchoSearchPattern(), 
+"				SearchSpecial#WrapMessage() and
+"				SearchSpecial#ErrorMessage(). 
 "	004	15-May-2009	BF: Translating line breaks in search pattern
 "				via EchoWithoutScrolling#TranslateLineBreaks()
 "				to avoid echoing only the last part of the
@@ -54,21 +59,22 @@ function! SearchSpecial#EchoSearchPattern( predicateId, searchPattern, isBackwar
     endif
 endfunction
 
-function! SearchSpecial#WrapMessage( predicateId, searchPattern, isBackward, message )
+function! SearchSpecial#WrapMessage( predicateId, searchPattern, isBackward, ... )
     if &shortmess !~# 's'
+	let l:message = (a:0 ? a:1 : (a:isBackward ? 'search hit TOP, continuing at BOTTOM' : 'search hit BOTTOM, continuing at TOP'))
 	echohl WarningMsg
-	let v:warningmsg = a:predicateId . ' ' . a:message
+	let v:warningmsg = a:predicateId . ' ' . l:message
 	echomsg v:warningmsg
 	echohl None
     else
 	call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
     endif
 endfunction
-function! s:ErrorMessage( searchPattern, ... )
+function! SearchSpecial#ErrorMessage( searchPattern, ... )
     " No need for EchoWithoutScrolling#TranslateLineBreaks() here, :echomsg
     " translates everything on its own. 
     echohl ErrorMsg
-    let v:errmsg = (a:0 > 0 && ! empty(a:1) ? a:1 : 'E486: Pattern not found: ' . a:searchPattern )
+    let v:errmsg = (a:0 > 0 && ! empty(a:1) ? a:1 : 'E486: Pattern not found') . ': ' . a:searchPattern
     echomsg v:errmsg
     echohl None
 endfunction
@@ -139,7 +145,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	    if ! a:isBackward && (l:prevLine > l:line || l:prevLine == l:line && l:prevCol >= l:col)
 		let l:isWrapped = 1
 	    elseif a:isBackward && (l:prevLine < l:line || l:prevLine == l:line && l:prevCol <= l:col)
-		let l:isWrapped = -1
+		let l:isWrapped = 1
 	    endif
 	else
 	    break
@@ -149,10 +155,8 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     if l:line > 0
 	normal! zv
 
-	if l:isWrapped == 1
-	    call SearchSpecial#WrapMessage(a:predicateId, a:searchPattern, a:isBackward, 'search hit BOTTOM, continuing at TOP')
-	elseif l:isWrapped == -1
-	    call SearchSpecial#WrapMessage(a:predicateId, a:searchPattern, a:isBackward, 'search hit TOP, continuing at BOTTOM')
+	if l:isWrapped
+	    call SearchSpecial#WrapMessage(a:predicateId, a:searchPattern, a:isBackward)
 	else
 	    call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
 	endif
@@ -171,9 +175,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	return 1
     else
 	if l:line < 0 && ! empty(a:predicateDescription)
-	    call s:ErrorMessage(a:searchPattern, 'Pattern not found ' . a:predicateDescription . ': ' . a:searchPattern)
+	    call SearchSpecial#ErrorMessage(a:searchPattern, 'Pattern not found ' . a:predicateDescription)
 	else
-	    call s:ErrorMessage(a:searchPattern)
+	    call SearchSpecial#ErrorMessage(a:searchPattern)
 	endif
 
 	" The view may have been changed by moving through unsuitable matches.
