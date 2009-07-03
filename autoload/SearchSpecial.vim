@@ -109,10 +109,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "   0 if pattern not found, 1 if a suitable match was found and jumped to. 
 "*******************************************************************************
     let l:save_cursor = getpos('.')
+    let l:save_view = winsaveview()
 
     let l:count = a:count
     let l:isWrapped = 0
-    let l:save_view = winsaveview()
 
     while l:count > 0
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
