@@ -9,6 +9,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	007	04-Jul-2009	SearchSpecial#ErrorMessage() now takes
+"				a:isBackward argument to build proper error
+"				message when 'nowrapscan'. The optional argument
+"				is now only the search type description, not the
+"				entire error message. 
 "	006	31-May-2009	Message to SearchSpecial#WrapMessage() is now
 "				optional; the canonical one is generated from
 "				a:isBackward. Streamlined
@@ -43,6 +48,8 @@
 "	001	05-May-2009	Split off generic function from
 "				SearchWithoutClosedFolds.vim. 
 "				file creation
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! s:EchoPredicateId( predicateId )
     echohl SearchSpecialSearchType
@@ -70,11 +77,26 @@ function! SearchSpecial#WrapMessage( predicateId, searchPattern, isBackward, ...
 	call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
     endif
 endfunction
-function! SearchSpecial#ErrorMessage( searchPattern, ... )
+function! SearchSpecial#ErrorMessage( searchPattern, isBackward, ... )
     " No need for EchoWithoutScrolling#TranslateLineBreaks() here, :echomsg
     " translates everything on its own. 
+
+    let l:hasDescription = (a:0 > 0 && ! empty(a:1))
+    let l:searchDescription = (l:hasDescription ? ' ' . a:1 : '')
+    if &wrapscan
+	let v:errmsg = printf('%sPattern not found%s: %s',
+	\   (l:hasDescription ? '' : 'E486: '),
+	\   l:searchDescription,
+	\   a:searchPattern
+	\)
+    else
+	let v:errmsg = printf('%ssearch%s hit %s without match for: %s',
+	\   (l:hasDescription ? '' : (a:isBackward ? 'E384: ' : 'E385: ')),
+	\   l:searchDescription,
+	\   (a:isBackward ? 'TOP' : 'BOTTOM'), a:searchPattern
+	\)
+    endif
     echohl ErrorMsg
-    let v:errmsg = (a:0 > 0 && ! empty(a:1) ? a:1 : 'E486: Pattern not found') . ': ' . a:searchPattern
     echomsg v:errmsg
     echohl None
 endfunction
@@ -174,10 +196,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	return 1
     else
-	if l:line < 0 && ! empty(a:predicateDescription)
-	    call SearchSpecial#ErrorMessage(a:searchPattern, 'Pattern not found ' . a:predicateDescription)
+	if l:line <= 0 && ! empty(a:predicateDescription)
+	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward, a:predicateDescription)
 	else
-	    call SearchSpecial#ErrorMessage(a:searchPattern)
+	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward)
 	endif
 
 	" The view may have been changed by moving through unsuitable matches.
@@ -188,4 +210,6 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     endif
 endfunction
 
+let &cpo = s:save_cpo
+unlet s:save_cpo
 " vim: set sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
