@@ -130,11 +130,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "* RETURN VALUES: 
 "   0 if pattern not found, 1 if a suitable match was found and jumped to. 
 "*******************************************************************************
-    let l:save_cursor = getpos('.')
     let l:save_view = winsaveview()
 
     let l:count = a:count
     let l:isWrapped = 0
+    let l:isOnlyExcludedMatches = 0
 
     while l:count > 0
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
@@ -153,8 +153,8 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 		" We've already encountered this match; this means that there is at
 		" least one match, but the predicate is never true: All matches
 		" should be skipped.  
-		let l:line = -1
-		call setpos('.', l:save_cursor)
+		let l:line = 0
+		let l:isOnlyExcludedMatches = 1
 		break
 	    endif
 	endwhile
@@ -196,9 +196,13 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	return 1
     else
-	if l:line <= 0 && ! empty(a:predicateDescription)
+	if (l:isOnlyExcludedMatches || ! &wrapscan) && ! empty(a:predicateDescription)
+	    " Notify that there are no predicate matches; this implies that
+	    " there are matches at positions excluded by the predicate. 
 	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward, a:predicateDescription)
 	else
+	    " No matches at all; show the common error message without
+	    " mentioning the predicate. 
 	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward)
 	endif
 
