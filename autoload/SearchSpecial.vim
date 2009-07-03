@@ -134,7 +134,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     let l:count = a:count
     let l:isWrapped = 0
-    let l:isOnlyExcludedMatches = 0
+    let l:isMatch = 0
 
     while l:count > 0
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
@@ -146,16 +146,18 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	    if l:line == 0
 		" There are no (more) matches. 
 		break
-	    elseif [l:firstMatchLine, l:firstMatchCol] == [0, 0]
-		" Record the first match to avoid endless loop. 
-		let [l:firstMatchLine, l:firstMatchCol] = [l:line, l:col]
-	    elseif [l:firstMatchLine, l:firstMatchCol] == [l:line, l:col]
-		" We've already encountered this match; this means that there is at
-		" least one match, but the predicate is never true: All matches
-		" should be skipped.  
-		let l:line = 0
-		let l:isOnlyExcludedMatches = 1
-		break
+	    else
+		let l:isMatch = 1
+		if [l:firstMatchLine, l:firstMatchCol] == [0, 0]
+		    " Record the first match to avoid endless loop. 
+		    let [l:firstMatchLine, l:firstMatchCol] = [l:line, l:col]
+		elseif [l:firstMatchLine, l:firstMatchCol] == [l:line, l:col]
+		    " We've already encountered this match; this means that there is at
+		    " least one match, but the predicate is never true: All matches
+		    " should be skipped.  
+		    let l:line = 0
+		    break
+		endif
 	    endif
 	endwhile
 	if l:line > 0
@@ -196,7 +198,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	return 1
     else
-	if (l:isOnlyExcludedMatches || ! &wrapscan) && ! empty(a:predicateDescription)
+	if l:isMatch && ! empty(a:predicateDescription)
 	    " Notify that there are no predicate matches; this implies that
 	    " there are matches at positions excluded by the predicate. 
 	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward, a:predicateDescription)
