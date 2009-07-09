@@ -14,6 +14,20 @@
 "				message when 'nowrapscan'. The optional argument
 "				is now only the search type description, not the
 "				entire error message. 
+"				Removed superfluous l:save_cursor; the restore
+"				of the cursor position when the predicate
+"				excludes all matches is already done by
+"				winrestview(). 
+"				Refactored algorithm to determine whether there
+"				were excluded matches: 
+"				- The communication whether there were excluded
+"				matches is now done via the separate
+"				l:isExcludedMatch, not as a magic value of -1
+"				for l:line. 
+"				- The differentiation now also works with
+"				'nowrapscan', because the predicate call has
+"				been moved into the while loop and its return
+"				value is evaluated for l:isExcludedMatch. 
 "	006	31-May-2009	Message to SearchSpecial#WrapMessage() is now
 "				optional; the canonical one is generated from
 "				a:isBackward. Streamlined
@@ -134,34 +148,41 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     let l:count = a:count
     let l:isWrapped = 0
-    let l:isMatch = 0
+    let l:isExcludedMatch = 0
 
     while l:count > 0
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
 	let [l:firstMatchLine, l:firstMatchCol] = [0, 0]
 	let l:line = 0
-	while l:line == 0 || ! call(a:Predicate, [a:isBackward])
+
+	" Search for the next included match while skipping excluded ones. 
+	while 1
 	    " Search for next match, 'wrapscan' applies. 
 	    let [l:line, l:col] = searchpos( a:searchPattern, (a:isBackward ? 'b' : '') )
 	    if l:line == 0
 		" There are no (more) matches. 
 		break
+	    elseif [l:firstMatchLine, l:firstMatchCol] == [0, 0]
+		" Record the first match to avoid endless loop. 
+		let [l:firstMatchLine, l:firstMatchCol] = [l:line, l:col]
+	    elseif [l:firstMatchLine, l:firstMatchCol] == [l:line, l:col]
+		" We've already encountered this match; this means that there is at
+		" least one match, but the predicate is never true: All matches
+		" should be skipped.  
+		let l:line = 0
+		break
+	    endif
+
+	    if call(a:Predicate, [a:isBackward])
+		" Okay, this match is included in the search. 
+		break
 	    else
-		let l:isMatch = 1
-		if [l:firstMatchLine, l:firstMatchCol] == [0, 0]
-		    " Record the first match to avoid endless loop. 
-		    let [l:firstMatchLine, l:firstMatchCol] = [l:line, l:col]
-		elseif [l:firstMatchLine, l:firstMatchCol] == [l:line, l:col]
-		    " We've already encountered this match; this means that there is at
-		    " least one match, but the predicate is never true: All matches
-		    " should be skipped.  
-		    let l:line = 0
-		    break
-		endif
+		" This match is rejected, continue searching. 
+		let l:isExcludedMatch = 1
 	    endif
 	endwhile
 	if l:line > 0
-	    " We found a suitable match. 
+	    " We found an accepted match. 
 	    let l:count -= 1
 
 	    " Note: No need to check 'wrapscan'; the wrapping can only occur if
@@ -172,6 +193,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 		let l:isWrapped = 1
 	    endif
 	else
+	    " We've failed; no more matches were found. 
 	    break
 	endif
     endwhile
@@ -198,9 +220,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	return 1
     else
-	if l:isMatch && ! empty(a:predicateDescription)
-	    " Notify that there are no predicate matches; this implies that
-	    " there are matches at positions excluded by the predicate. 
+	if l:isExcludedMatch && ! empty(a:predicateDescription)
+	    " Notify that there is no a:count'th predicate match; this implies
+	    " that there *are* matches at positions excluded by the predicate. 
 	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward, a:predicateDescription)
 	else
 	    " No matches at all; show the common error message without
