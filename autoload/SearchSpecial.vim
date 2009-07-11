@@ -119,7 +119,7 @@ function! SearchSpecial#ErrorMessage( searchPattern, isBackward, ... )
     echohl None
 endfunction
 
-function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateId, predicateDescription, count )
+function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateId, predicateDescription, count, ... )
 "*******************************************************************************
 "* PURPOSE:
 "   Search for the next match of the a:searchPattern, skipping all
@@ -144,6 +144,13 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    suitable matches were found. E.g. "outside closed
 "			    folds". 
 "   a:count	    Number of search repetitions, as in the [count]n command. 
+"   Optional:
+"   a:currentMatchPosition  In case the search should jump to text entities like
+"			    <cword> (i.e. in an emulation of the '*' and '#'
+"			    commands), the current entity should be skipped
+"			    during a backward search. Pass the start position of
+"			    the current text entity the cursor is on, and the
+"			    function will skip the current entity. 
 "
 "* RETURN VALUES: 
 "   0 if pattern not found, 1 if a suitable match was found and jumped to. 
@@ -151,6 +158,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:save_view = winsaveview()
 
     let l:count = a:count
+    let l:currentMatchPosition = (a:0 ? a:1 : [])
     let l:isWrapped = 0
     let l:isExcludedMatch = 0
 
@@ -169,6 +177,38 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	    elseif [l:firstMatchLine, l:firstMatchCol] == [0, 0]
 		" Record the first match to avoid endless loop. 
 		let [l:firstMatchLine, l:firstMatchCol] = [l:line, l:col]
+
+		if a:isBackward && [l:line, l:col] == l:currentMatchPosition && l:count == a:count
+		    " On a search in backward direction, the first match is the
+		    " start of the current match (if the cursor was positioned
+		    " on the current match text, and not at the start of the
+		    " match text). 
+		    " In case of an entity search, this is not considered the
+		    " first match. The match text is one entity; if the cursor
+		    " is positioned anywhere inside the match text, the match
+		    " text is considered the current match. The built-in '*' and
+		    " '#' commands behave in the same way; the entire <cword>
+		    " text is considered the current match, and jumps move
+		    " outside that text.
+		    " Thus, the search is retried (i.e. l:count is increased),
+		    " but only if this was the first match; repeat visits during
+		    " wrapping around count as a regular match. The search also
+		    " must not be retried when this is the first match, but
+		    " we've been here before (i.e. l:isExcludedMatch is set):
+		    " This means that there is only the current match in the
+		    " buffer, and we must break out of the loop and indicate
+		    " that no other match was found. 
+		    if l:isExcludedMatch
+			break
+		    endif
+
+		    " The l:isExcludedMatch flag is set so if the final match
+		    " cannot be reached, the original cursor position is
+		    " restored. This flag also allows us to detect whether we've
+		    " been here before, which is checked above. 
+		    let l:isExcludedMatch = 1
+		    let l:count += 1
+		endif
 	    elseif [l:firstMatchLine, l:firstMatchCol] == [l:line, l:col]
 		" We've already encountered this match; this means that there is at
 		" least one match, but the predicate is never true: All matches
@@ -177,7 +217,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 		break
 	    endif
 
-	    if call(a:Predicate, [a:isBackward])
+	    if empty(a:Predicate) || call(a:Predicate, [a:isBackward])
 		" Okay, this match is included in the search. 
 		break
 	    else
