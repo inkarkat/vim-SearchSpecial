@@ -9,6 +9,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	008	10-Jul-2009	BF: Wrap message vanished (with
+"				SearchAlternateStar.vim client) when next match
+"				was outside the current view. Now :redraw'ing
+"				first. 
 "	007	04-Jul-2009	SearchSpecial#ErrorMessage() now takes
 "				a:isBackward argument to build proper error
 "				message when 'nowrapscan'. The optional argument
@@ -202,6 +206,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	normal! zv
 
 	if l:isWrapped
+	    redraw
 	    call SearchSpecial#WrapMessage(a:predicateId, a:searchPattern, a:isBackward)
 	else
 	    call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
