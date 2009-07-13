@@ -9,6 +9,15 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	009	12-Jul-2009	ENH: a:Predicate can now be empty to accept
+"				every match. This avoids having to pass in a
+"				dummy predicate (for SearchAlternateStar and
+"				SearchAsQuickJump plugins). 
+"				ENH: Added optional a:currentMatchPosition
+"				argument to support jumping to text entities
+"				like <cword>, where the current entity should be
+"				skipped during a backward search. Modified
+"				algorithm according to s:Search() in mark.vim. 
 "	008	10-Jul-2009	BF: Wrap message vanished (with
 "				SearchAlternateStar.vim client) when next match
 "				was outside the current view. Now :redraw'ing
@@ -135,7 +144,8 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "   a:isBackward    Flag whether to do backward search. 
 "   a:Predicate	    Function reference that is called on each match location;
 "		    must take a Boolean isBackward argument and return whether
-"		    the match should be included. 
+"		    the match should be included. Or pass an empty value to
+"		    accept all matches. 
 "   a:predicateId   Identifier text for the predicate selection. If not empty,
 "		    this is prepended to echo'ed search pattern, wrap and error
 "		    messages (to indicate the current type of special search). 
@@ -178,10 +188,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 		" Record the first match to avoid endless loop. 
 		let [l:firstMatchLine, l:firstMatchCol] = [l:line, l:col]
 
-		if a:isBackward && [l:line, l:col] == l:currentMatchPosition && l:count == a:count
+		if a:isBackward && [l:line, l:col] == l:currentMatchPosition && l:count == a:count && ! l:isExcludedMatch
 		    " On a search in backward direction, the first match is the
 		    " start of the current match (if the cursor was positioned
-		    " on the current match text, and not at the start of the
+		    " inside the current match text but not at the start of the
 		    " match text). 
 		    " In case of an entity search, this is not considered the
 		    " first match. The match text is one entity; if the cursor
@@ -190,24 +200,22 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 		    " '#' commands behave in the same way; the entire <cword>
 		    " text is considered the current match, and jumps move
 		    " outside that text.
+		    
 		    " Thus, the search is retried (i.e. l:count is increased),
-		    " but only if this was the first match; repeat visits during
-		    " wrapping around count as a regular match. The search also
-		    " must not be retried when this is the first match, but
-		    " we've been here before (i.e. l:isExcludedMatch is set):
-		    " This means that there is only the current match in the
-		    " buffer, and we must break out of the loop and indicate
-		    " that no other match was found. 
-		    if l:isExcludedMatch
-			break
-		    endif
+		    " but only if this was the first match (l:count == a:count);
+		    " repeat visits during wrapping around count as a regular
+		    " match. The search also must not be retried when this is
+		    " the first match, but we've been here before (i.e.
+		    " l:isExcludedMatch is set): This means that there is only
+		    " the current match in the buffer, and we must break out of
+		    " the loop and indicate that no other match was found. 
+		    let l:count += 1
 
 		    " The l:isExcludedMatch flag is set so if the final match
 		    " cannot be reached, the original cursor position is
 		    " restored. This flag also allows us to detect whether we've
 		    " been here before, which is checked above. 
 		    let l:isExcludedMatch = 1
-		    let l:count += 1
 		endif
 	    elseif [l:firstMatchLine, l:firstMatchCol] == [l:line, l:col]
 		" We've already encountered this match; this means that there is at
