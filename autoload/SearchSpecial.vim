@@ -15,6 +15,9 @@
 "				messages after winrestview(). 
 "				Changed interface to allow passing additional
 "				options in a dictionary. 
+"				Added 'isStarSearch' option for
+"				SearchAlternateStar and SearchAsQuickJump
+"				plugins. 
 "	009	12-Jul-2009	ENH: a:Predicate can now be empty to accept
 "				every match. This avoids having to pass in a
 "				dummy predicate (for SearchAlternateStar and
@@ -174,6 +177,15 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    argument or pass an empty list (or a position which
 "			    is always invalid like [0, 0]) to include the
 "			    current entity in a search. 
+"   isStarSearch	    The search function in here uses the 'ignorecase'
+"			    and 'smartcase' settings. For searches similar to
+"			    the '*' and '#' commands, the 'smartcase' setting
+"			    doesn't make sense: Executed on an all-lowercase
+"			    <cword>, a case-insensitive search would be started,
+"			    but when repeated on a <cword> containing uppercase
+"			    characters, the search would suddenly change to
+"			    being case-sensitive. Set this flag to ignore
+"			    'smartcase' during the search. 
 "
 "* RETURN VALUES: 
 "   0 if pattern not found, 1 if a suitable match was found and jumped to. 
@@ -181,8 +193,15 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:save_view = winsaveview()
 
     let l:count = a:count
+
     let l:options = (a:0 ? a:1 : {})
     let l:currentMatchPosition = get(l:options, 'currentMatchPosition', [])
+    let l:isStarSearch = get(l:options, 'isStarSearch', 0)
+    if l:isStarSearch
+	let l:save_smartcase = &smartcase
+	set nosmartcase
+    endif
+
     let l:isWrapped = 0
     let l:isExcludedMatch = 0
 
@@ -264,7 +283,8 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	endif
     endwhile
 
-    if l:line > 0
+    let l:isFound = (l:line > 0)
+    if l:isFound
 	normal! zv
 
 	" The view (especially the horizontal window view) may have been changed
@@ -284,8 +304,6 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	else
 	    call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
 	endif
-
-	return 1
     else
 	" The view may have been changed by moving through unsuitable matches.
 	" Restore the view to the state before the search. 
@@ -300,9 +318,13 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	    " mentioning the predicate. 
 	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward)
 	endif
-
-	return 0
     endif
+
+    if l:isStarSearch
+	let &smartcase = l:save_smartcase
+    endif
+
+    return l:isFound
 endfunction
 
 let &cpo = s:save_cpo
