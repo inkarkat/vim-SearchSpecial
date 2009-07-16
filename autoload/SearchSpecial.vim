@@ -135,7 +135,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "   those matches where a:Predicate returns false. 
 "
 "* ASSUMPTIONS / PRECONDITIONS:
-"	? List of any external variable, control, or other element whose state affects this procedure.
+"   This function uses search(), so the 'ignorecase', 'smartcase' and 'magic'
+"   settings are obeyed. 
+"
 "* EFFECTS / POSTCONDITIONS:
 "   Positions cursor on the next match. 
 "
@@ -160,7 +162,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    commands), the current entity should be skipped
 "			    during a backward search. Pass the start position of
 "			    the current text entity the cursor is on, and the
-"			    function will skip the current entity. 
+"			    function will skip the current entity. Omit this
+"			    argument or pass a position which is always invalid
+"			    (like [0, 0]) to include the current entity in a
+"			    search. 
 "
 "* RETURN VALUES: 
 "   0 if pattern not found, 1 if a suitable match was found and jumped to. 
