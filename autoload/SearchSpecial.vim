@@ -9,6 +9,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	010	17-Jul-2009	BF: Wrap message disappeared when jumping to a
+"				match in a closed fold (so that the restore of
+"				the view caused scrolling). Now echoing all
+"				messages after winrestview(). 
 "	009	12-Jul-2009	ENH: a:Predicate can now be empty to accept
 "				every match. This avoids having to pass in a
 "				dummy predicate (for SearchAlternateStar and
@@ -258,13 +262,6 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     if l:line > 0
 	normal! zv
 
-	if l:isWrapped
-	    redraw
-	    call SearchSpecial#WrapMessage(a:predicateId, a:searchPattern, a:isBackward)
-	else
-	    call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
-	endif
-
 	" The view (especially the horizontal window view) may have been changed
 	" by moving to unsuitable matches. This may irritate the user, who is
 	" not aware that the implementation also searched invisible parts of the
@@ -276,8 +273,19 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	call winrestview(l:save_view)
 	call setpos('.', l:matchPosition)
 
+	if l:isWrapped
+	    redraw
+	    call SearchSpecial#WrapMessage(a:predicateId, a:searchPattern, a:isBackward)
+	else
+	    call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
+	endif
+
 	return 1
     else
+	" The view may have been changed by moving through unsuitable matches.
+	" Restore the view to the state before the search. 
+	call winrestview(l:save_view)
+
 	if l:isExcludedMatch && ! empty(a:predicateDescription)
 	    " Notify that there is no a:count'th predicate match; this implies
 	    " that there *are* matches at positions excluded by the predicate. 
@@ -287,10 +295,6 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	    " mentioning the predicate. 
 	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward)
 	endif
-
-	" The view may have been changed by moving through unsuitable matches.
-	" Restore the view to the state before the search. 
-	call winrestview(l:save_view)
 
 	return 0
     endif
