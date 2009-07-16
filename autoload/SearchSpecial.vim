@@ -13,6 +13,8 @@
 "				match in a closed fold (so that the restore of
 "				the view caused scrolling). Now echoing all
 "				messages after winrestview(). 
+"				Changed interface to allow passing additional
+"				options in a dictionary. 
 "	009	12-Jul-2009	ENH: a:Predicate can now be empty to accept
 "				every match. This avoids having to pass in a
 "				dummy predicate (for SearchAlternateStar and
@@ -161,15 +163,17 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    folds". 
 "   a:count	    Number of search repetitions, as in the [count]n command. 
 "   Optional:
-"   a:currentMatchPosition  In case the search should jump to text entities like
+"   You can pass in a dictionary with advanced options; these keys are
+"   supported: 
+"   currentMatchPosition    In case the search should jump to text entities like
 "			    <cword> (i.e. in an emulation of the '*' and '#'
 "			    commands), the current entity should be skipped
 "			    during a backward search. Pass the start position of
 "			    the current text entity the cursor is on, and the
 "			    function will skip the current entity. Omit this
-"			    argument or pass a position which is always invalid
-"			    (like [0, 0]) to include the current entity in a
-"			    search. 
+"			    argument or pass an empty list (or a position which
+"			    is always invalid like [0, 0]) to include the
+"			    current entity in a search. 
 "
 "* RETURN VALUES: 
 "   0 if pattern not found, 1 if a suitable match was found and jumped to. 
@@ -177,7 +181,8 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:save_view = winsaveview()
 
     let l:count = a:count
-    let l:currentMatchPosition = (a:0 ? a:1 : [])
+    let l:options = (a:0 ? a:1 : {})
+    let l:currentMatchPosition = get(l:options, 'currentMatchPosition', [])
     let l:isWrapped = 0
     let l:isExcludedMatch = 0
 
