@@ -18,6 +18,11 @@
 "				Added 'isStarSearch' option for
 "				SearchAlternateStar and SearchAsQuickJump
 "				plugins. 
+"				Added 'keepfolds' option to avoid opening the
+"				fold at the search result. 
+"				Now adding the original cursor position to the
+"				jump list, like the built-in [/?*#nN] commands.
+"				This can be disabled via the 'keepjumps' option. 
 "	009	12-Jul-2009	ENH: a:Predicate can now be empty to accept
 "				every match. This avoids having to pass in a
 "				dummy predicate (for SearchAlternateStar and
@@ -186,6 +191,13 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    characters, the search would suddenly change to
 "			    being case-sensitive. Set this flag to ignore
 "			    'smartcase' during the search. 
+"   keepfolds		    When set, the fold state is kept. By default, any
+"			    folds at the search result are opened, like the
+"			    built-in [/?*#nN] commands. 
+"   keepjumps		    When set, the previous cursor position is not added
+"			    to the jump list. By default, the original cursor
+"			    position is added to the jump list, like the
+"			    built-in [/?*#nN] commands. 
 "
 "* RETURN VALUES: 
 "   0 if pattern not found, 1 if a suitable match was found and jumped to. 
@@ -285,7 +297,12 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     let l:isFound = (l:line > 0)
     if l:isFound
-	normal! zv
+	let l:matchPosition = getpos('.')
+
+	if ! get(l:options, 'keepfolds', 0)
+	    " Open fold at the search result, like the built-in commands. 
+	    normal! zv
+	endif
 
 	" The view (especially the horizontal window view) may have been changed
 	" by moving to unsuitable matches. This may irritate the user, who is
@@ -293,9 +310,15 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	" buffer. 
 	" To fix that, we memorize the match position, restore the view to the
 	" state before the search, then jump straight back to the match
-	" position. 
-	let l:matchPosition = getpos('.')
+	" position. This also allows us to set a jump only if a match was found. 
 	call winrestview(l:save_view)
+
+	if ! get(l:options, 'keepjumps', 0)
+	    " Add the original cursor position to the jump list, like the
+	    " [/?*#nN] commands. 
+	    normal! m'
+	endif
+
 	call setpos('.', l:matchPosition)
 
 	if l:isWrapped
