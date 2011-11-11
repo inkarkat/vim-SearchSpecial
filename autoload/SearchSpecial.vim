@@ -311,6 +311,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	" To fix that, we memorize the match position, restore the view to the
 	" state before the search, then jump straight back to the match
 	" position. This also allows us to set a jump only if a match was found. 
+	" (:call setpos("''", ...) doesn't work in Vim 7.2) 
 	call winrestview(l:save_view)
 
 	if ! get(l:options, 'keepjumps', 0)
