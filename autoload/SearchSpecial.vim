@@ -2,13 +2,19 @@
 "
 " DEPENDENCIES:
 "   - ingo/avoidprompt.vim autoload script
+"   - ingo/err.vim autoload script
+"   - ingo/msg.vim autoload script
 "
-" Copyright: (C) 2009-2013 Ingo Karkat
+" Copyright: (C) 2009-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"	012	26-Apr-2014	Do not print the pattern not found error
+"				message; instead, use ingo#err#Set() and let
+"				clients :echoerr it.
+"				Use ingo#msg#WarningMsg().
 "   	011	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
 "	010	17-Jul-2009	BF: Wrap message disappeared when jumping to a
 "				match in a closed fold (so that the restore of
@@ -111,10 +117,7 @@ endfunction
 function! SearchSpecial#WrapMessage( predicateId, searchPattern, isBackward, ... )
     if &shortmess !~# 's'
 	let l:message = (a:0 ? a:1 : (a:isBackward ? 'search hit TOP, continuing at BOTTOM' : 'search hit BOTTOM, continuing at TOP'))
-	echohl WarningMsg
-	let v:warningmsg = a:predicateId . ' ' . l:message
-	echomsg v:warningmsg
-	echohl None
+	call ingo#msg#WarningMsg(a:predicateId . ' ' . l:message)
     else
 	call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
     endif
@@ -126,21 +129,20 @@ function! SearchSpecial#ErrorMessage( searchPattern, isBackward, ... )
     let l:hasDescription = (a:0 > 0 && ! empty(a:1))
     let l:searchDescription = (l:hasDescription ? ' ' . a:1 : '')
     if &wrapscan
-	let v:errmsg = printf('%sPattern not found%s: %s',
+	let l:errorMessage = printf('%sPattern not found%s: %s',
 	\   (l:hasDescription ? '' : 'E486: '),
 	\   l:searchDescription,
 	\   a:searchPattern
 	\)
     else
-	let v:errmsg = printf('%ssearch%s hit %s without match for: %s',
+	let l:errorMessage = printf('%ssearch%s hit %s without match for: %s',
 	\   (l:hasDescription ? '' : (a:isBackward ? 'E384: ' : 'E385: ')),
 	\   l:searchDescription,
 	\   (a:isBackward ? 'TOP' : 'BOTTOM'), a:searchPattern
 	\)
     endif
-    echohl ErrorMsg
-    echomsg v:errmsg
-    echohl None
+
+    call ingo#err#Set(l:errorMessage)
 endfunction
 
 function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateId, predicateDescription, count, ... )
@@ -155,6 +157,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "
 "* EFFECTS / POSTCONDITIONS:
 "   Positions cursor on the next match.
+"   Prints wrap warning message or used search pattern.
+"   Does not print "pattern not found" error messages; the client should do this
+"   (via :echoerr ingo#err#Get()) if the function returns 0.
 "
 "* INPUTS:
 "   a:searchPattern Regular expression to search for.
@@ -201,7 +206,8 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    built-in [/?*#nN] commands.
 "
 "* RETURN VALUES:
-"   0 if pattern not found, 1 if a suitable match was found and jumped to.
+"   0 if pattern not found; ingo#err#Get() then has the appropriate error
+"   message, 1 if a suitable match was found and jumped to.
 "*******************************************************************************
     let l:save_view = winsaveview()
 
