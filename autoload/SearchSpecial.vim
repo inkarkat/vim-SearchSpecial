@@ -4,6 +4,7 @@
 "   - ingo/avoidprompt.vim autoload script
 "   - ingo/err.vim autoload script
 "   - ingo/msg.vim autoload script
+"   - ingo/pos.vim autoload script
 "
 " Copyright: (C) 2009-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -11,6 +12,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"	013	30-Apr-2014	Use ingo/pos.vim.
 "	012	26-Apr-2014	Do not print the pattern not found error
 "				message; instead, use ingo#err#Set() and let
 "				clients :echoerr it.
@@ -291,9 +293,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	    " Note: No need to check 'wrapscan'; the wrapping can only occur if
 	    " 'wrapscan' is actually on.
-	    if ! a:isBackward && (l:prevLine > l:line || l:prevLine == l:line && l:prevCol >= l:col)
+	    if ! a:isBackward && ingo#pos#IsOnOrAfter([l:prevLine, l:prevCol], [l:line, l:column])
 		let l:isWrapped = 1
-	    elseif a:isBackward && (l:prevLine < l:line || l:prevLine == l:line && l:prevCol <= l:col)
+	    elseif a:isBackward && ingo#pos#IsOnOrBefore([l:prevLine, l:prevCol], [l:line, l:column])
 		let l:isWrapped = 1
 	    endif
 	else
