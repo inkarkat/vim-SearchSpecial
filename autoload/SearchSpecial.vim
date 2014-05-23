@@ -12,6 +12,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"	014	02-May-2014	BUG: Used wrong variable name.
 "	013	30-Apr-2014	Use ingo/pos.vim.
 "	012	26-Apr-2014	Do not print the pattern not found error
 "				message; instead, use ingo#err#Set() and let
@@ -293,9 +294,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	    " Note: No need to check 'wrapscan'; the wrapping can only occur if
 	    " 'wrapscan' is actually on.
-	    if ! a:isBackward && ingo#pos#IsOnOrAfter([l:prevLine, l:prevCol], [l:line, l:column])
+	    if ! a:isBackward && ingo#pos#IsOnOrAfter([l:prevLine, l:prevCol], [l:line, l:col])
 		let l:isWrapped = 1
-	    elseif a:isBackward && ingo#pos#IsOnOrBefore([l:prevLine, l:prevCol], [l:line, l:column])
+	    elseif a:isBackward && ingo#pos#IsOnOrBefore([l:prevLine, l:prevCol], [l:line, l:col])
 		let l:isWrapped = 1
 	    endif
 	else
