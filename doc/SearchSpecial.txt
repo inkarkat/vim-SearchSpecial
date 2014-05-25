@@ -1,0 +1,112 @@
+*SearchSpecial.txt*     Generic functions for special search modes.
+
+		       SEARCH SPECIAL    by Ingo Karkat
+							   *SearchSpecial.vim*
+description			|SearchSpecial-description|
+usage				|SearchSpecial-usage|
+installation			|SearchSpecial-installation|
+limitations			|SearchSpecial-limitations|
+known problems			|SearchSpecial-known-problems|
+todo				|SearchSpecial-todo|
+history				|SearchSpecial-history|
+
+==============================================================================
+DESCRIPTION					   *SearchSpecial-description*
+
+The built-in search via |/|, |n|, and |N| does its job. But sometimes, it
+would be nice to have a custom search that is limited to a certain range, or
+the first match in a line, or certain syntax groups, or a search that doesn't
+open folds. This plugin offers generic functions that can be used to easily
+build such custom search mappings for special searches. A predicate function
+can specify which matches are skipped, and options control the behavior with
+regards to folding and jumps.
+
+SEE ALSO								     *
+
+The following custom searches use this plugin:
+
+SearchAlternateStar:	    Alternate star "*" search for the word nearest to
+			    the cursor.
+SearchAsQuickJump:	    Quick search without affecting 'hlsearch', search
+			    pattern and history.
+SearchFoldsWithoutOpening:  Show search results in closed folds without
+			    opening them.
+SearchForExpr:		    Search where pattern matches and a passed
+			    expression evaluates to true.
+SearchInSyntax:		    Skip matches in a particular syntax item when
+			    jumping to the next search result.
+SearchLineOnce:		    Skip multiple matches in a line when jumping to
+			    the next search result.
+SearchWithoutClosedFolds:   Skip closed folds when jumping to the next search
+			    result.
+
+RELATED WORKS								     *
+(Alternatives from other authors, other approaches, references not used here.)
+
+==============================================================================
+USAGE							 *SearchSpecial-usage*
+
+This plugin defines several functions. The following is an overview; you'll
+find the details directly in the implementation files in the .vim/autoload/
+directory.
+
+SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateId, predicateDescription, count, ... )
+
+The main helper function that jumps to the next match of a:searchPattern,
+skipping all those matches where a:Predicate returns false.
+
+==============================================================================
+EXAMPLE						       *SearchSpecial-example*
+
+Here's a simple search mapping that emulates the default search (because it
+doesn't pass a predicate that limits the matches, nor are there any options): >
+    nnoremap <silent> ,n
+    \   :<C-u>if SearchSpecial#SearchWithout(@/, 0, '', 'default', '', v:count1)<Bar>
+    \   if &hlsearch<Bar>set hlsearch<Bar>endif<Bar>
+    \   else<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+The 'hlsearch' handling cannot be done in a function; and any "Pattern not
+found" error is raised directly from the mapping; that's the boilerplate code
+at the end of the mapping.
+
+==============================================================================
+INSTALLATION					  *SearchSpecial-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim SearchSpecial*.vmb.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES					  *SearchSpecial-dependencies*
+
+- Requires Vim 7.0 or higher.
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.019 or
+  higher.
+
+==============================================================================
+LIMITATIONS					   *SearchSpecial-limitations*
+
+KNOWN PROBLEMS					*SearchSpecial-known-problems*
+
+TODO							  *SearchSpecial-todo*
+
+IDEAS							 *SearchSpecial-ideas*
+
+==============================================================================
+HISTORY						       *SearchSpecial-history*
+
+1.00	24-May-2014
+First published version.
+
+0.01	05-May-2009
+Started development.
+
+==============================================================================
+Copyright: (C) 2009-2014 Ingo Karkat
+The VIM LICENSE applies to this plugin; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
