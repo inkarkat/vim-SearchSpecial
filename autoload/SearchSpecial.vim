@@ -12,7 +12,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"	014	02-May-2014	BUG: Used wrong variable name.
+"   1.00.014	02-May-2014	BUG: Used wrong variable name.
 "	013	30-Apr-2014	Use ingo/pos.vim.
 "	012	26-Apr-2014	Do not print the pattern not found error
 "				message; instead, use ingo#err#Set() and let
