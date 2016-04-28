@@ -23,6 +23,11 @@ regards to folding and jumps.
 
 SEE ALSO								     *
 
+- The SearchRepeat.vim (vimscript #4949) plugin provides an integration
+  facility for custom searches (such as ones implemented via
+  SearchSpecial.vim) that repeats the last type of used search via n/N, and
+  can list all defined custom searches.
+
 The following custom searches use this plugin:
 
 SearchAlternateStar:	    Alternate star "*" search for the word nearest to
