@@ -40,10 +40,16 @@ SearchForExpr:		    Search where pattern matches and a passed
 			    expression evaluates to true.
 SearchInSyntax:		    Skip matches in a particular syntax item when
 			    jumping to the next search result.
+SearchInView:		    Search for next match inside / outside the
+			    currently visible view.
 SearchLineOnce:		    Skip multiple matches in a line when jumping to
 			    the next search result.
+SearchWithInv:		    Search for next match with inverted wrapscan /
+			    ignorecase settings.
 SearchWithoutClosedFolds:   Skip closed folds when jumping to the next search
 			    result.
+SearchWithoutFoldedBeyondLines: Skip folded lines except the first when
+			    jumping to the next search result.
 
 RELATED WORKS								     *
 (Alternatives from other authors, other approaches, references not used here.)
@@ -102,6 +108,10 @@ IDEAS							 *SearchSpecial-ideas*
 ==============================================================================
 HISTORY						       *SearchSpecial-history*
 
+1.10	RELEASEME
+- ENH: Allow to configure the echoing of successful matches via
+  a:options.EchoFunction.
+
 1.00	24-May-2014
 First published version.
 
@@ -109,7 +119,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2014 Ingo Karkat
+Copyright: (C) 2009-2016 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
