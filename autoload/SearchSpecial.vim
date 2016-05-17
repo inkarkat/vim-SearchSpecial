@@ -12,6 +12,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.015	29-Dec-2014	ENH: Allow to configure the echoing of
+"				successful matches via a:options.EchoFunction.
 "   1.00.014	02-May-2014	BUG: Used wrong variable name.
 "	013	30-Apr-2014	Use ingo/pos.vim.
 "	012	26-Apr-2014	Do not print the pattern not found error
@@ -147,6 +149,14 @@ function! SearchSpecial#ErrorMessage( searchPattern, isBackward, ... )
 
     call ingo#err#Set(l:errorMessage)
 endfunction
+function! SearchSpecial#Echo( predicateId, searchPattern, isBackward, isWrapped, lnum, col )
+    if a:isWrapped
+	redraw
+	call SearchSpecial#WrapMessage(a:predicateId, a:searchPattern, a:isBackward)
+    else
+	call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
+    endif
+endfunction
 
 function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateId, predicateDescription, count, ... )
 "*******************************************************************************
@@ -207,6 +217,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    to the jump list. By default, the original cursor
 "			    position is added to the jump list, like the
 "			    built-in [/?*#nN] commands.
+"   EchoFunction            Funcref to a function that gets passed (predicateId,
+"			    searchPattern, isBackward, isWrapped, lnum, col)
+"			    when the current successful match should be echoed.
 "
 "* RETURN VALUES:
 "   0 if pattern not found; ingo#err#Get() then has the appropriate error
@@ -218,6 +231,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     let l:options = (a:0 ? a:1 : {})
     let l:currentMatchPosition = get(l:options, 'currentMatchPosition', [])
+    let l:Echo = get(l:options, 'EchoFunction', 'SearchSpecial#Echo')
     let l:isStarSearch = get(l:options, 'isStarSearch', 0)
     if l:isStarSearch
 	let l:save_smartcase = &smartcase
@@ -332,12 +346,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	call setpos('.', l:matchPosition)
 
-	if l:isWrapped
-	    redraw
-	    call SearchSpecial#WrapMessage(a:predicateId, a:searchPattern, a:isBackward)
-	else
-	    call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
-	endif
+	call call(l:Echo, [a:predicateId, a:searchPattern, a:isBackward, l:isWrapped, l:line, l:matchPosition[2]])
     else
 	" The view may have been changed by moving through unsuitable matches.
 	" Restore the view to the state before the search.
