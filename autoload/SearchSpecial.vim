@@ -6,12 +6,15 @@
 "   - ingo/msg.vim autoload script
 "   - ingo/pos.vim autoload script
 "
-" Copyright: (C) 2009-2014 Ingo Karkat
+" Copyright: (C) 2009-2016 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.016	18-May-2016	ENH: Allow to configure the error messages when
+"				there are no matches via
+"				a:options.ErrorFunction.
 "   1.10.015	29-Dec-2014	ENH: Allow to configure the echoing of
 "				successful matches via a:options.EchoFunction.
 "   1.00.014	02-May-2014	BUG: Used wrong variable name.
@@ -220,6 +223,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "   EchoFunction            Funcref to a function that gets passed (predicateId,
 "			    searchPattern, isBackward, isWrapped, lnum, col)
 "			    when the current successful match should be echoed.
+"   ErrorFunction	    Funcref to a function that gets passed
+"			    (searchPattern, isBackward) in case of no matches at
+"			    all, and (searchPattern, isBackward,
+"			    predicateDescription) in case of no matches selected
+"			    by the predicate.
 "
 "* RETURN VALUES:
 "   0 if pattern not found; ingo#err#Get() then has the appropriate error
@@ -232,6 +240,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:options = (a:0 ? a:1 : {})
     let l:currentMatchPosition = get(l:options, 'currentMatchPosition', [])
     let l:Echo = get(l:options, 'EchoFunction', 'SearchSpecial#Echo')
+    let l:Error = get(l:options, 'ErrorFunction', 'SearchSpecial#ErrorMessage')
     let l:isStarSearch = get(l:options, 'isStarSearch', 0)
     if l:isStarSearch
 	let l:save_smartcase = &smartcase
@@ -355,11 +364,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	if l:isExcludedMatch && ! empty(a:predicateDescription)
 	    " Notify that there is no a:count'th predicate match; this implies
 	    " that there *are* matches at positions excluded by the predicate.
-	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward, a:predicateDescription)
+	    call call(l:Error, [a:searchPattern, a:isBackward, a:predicateDescription])
 	else
 	    " No matches at all; show the common error message without
 	    " mentioning the predicate.
-	    call SearchSpecial#ErrorMessage(a:searchPattern, a:isBackward)
+	    call call(l:Error, [a:searchPattern, a:isBackward])
 	endif
     endif
 
