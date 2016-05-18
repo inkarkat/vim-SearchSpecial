@@ -111,6 +111,9 @@ HISTORY						       *SearchSpecial-history*
 1.10	RELEASEME
 - ENH: Allow to configure the echoing of successful matches via
   a:options.EchoFunction.
+- ENH: Allow to configure the error messages when there are no matches via
+  a:options.ErrorFunction.
+- ENH: Allow to return more search information via a:options.isReturnMoreInfo.
 
 1.00	24-May-2014
 First published version.
