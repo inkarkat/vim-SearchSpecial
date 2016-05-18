@@ -15,6 +15,8 @@
 "   1.10.016	18-May-2016	ENH: Allow to configure the error messages when
 "				there are no matches via
 "				a:options.ErrorFunction.
+"				ENH: Allow to return more search information via
+"				a:options.isReturnMoreInfo.
 "   1.10.015	29-Dec-2014	ENH: Allow to configure the echoing of
 "				successful matches via a:options.EchoFunction.
 "   1.00.014	02-May-2014	BUG: Used wrong variable name.
@@ -228,7 +230,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    all, and (searchPattern, isBackward,
 "			    predicateDescription) in case of no matches selected
 "			    by the predicate.
-"
+"   isReturnMoreInfo        Flag to return Dictionary of {
+"				'isFound': Boolean,
+"				'remainingCount': number of matches not found
+"			    }
 "* RETURN VALUES:
 "   0 if pattern not found; ingo#err#Get() then has the appropriate error
 "   message, 1 if a suitable match was found and jumped to.
@@ -376,7 +381,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	let &smartcase = l:save_smartcase
     endif
 
-    return l:isFound
+    return (get(l:options, 'isReturnMoreInfo', 0) ? {'isFound': l:isFound, 'remainingCount': l:count} : l:isFound)
 endfunction
 
 let &cpo = s:save_cpo
