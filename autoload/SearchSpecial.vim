@@ -1,6 +1,7 @@
 " SearchSpecial.vim: Generic functions for special search modes.
 "
 " DEPENDENCIES:
+"   - ingo/actions.vim autoload script
 "   - ingo/avoidprompt.vim autoload script
 "   - ingo/err.vim autoload script
 "   - ingo/msg.vim autoload script
@@ -12,6 +13,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.017	19-May-2016	ENH: Allow to run commands before and after the
+"				first search via
+"				a:options.BeforeFirstSearchAction and
+"				a:options.AfterFirstSearchAction. Needed for
+"				SearchManyLocations.vim.
 "   1.10.016	18-May-2016	ENH: Allow to configure the error messages when
 "				there are no matches via
 "				a:options.ErrorFunction.
@@ -234,6 +240,12 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "				'isFound': Boolean,
 "				'remainingCount': number of matches not found
 "			    }
+"   BeforeFirstSearchAction Funcref or commands to execute before the first
+"			    search is performed.
+"   AfterFirstSearchAction  Funcref or commands to execute after the first
+"			    search (that satisfies the predicate) has been
+"			    performed. Only executed for the first count, not on
+"			    subsequent ones.
 "* RETURN VALUES:
 "   0 if pattern not found; ingo#err#Get() then has the appropriate error
 "   message, 1 if a suitable match was found and jumped to.
@@ -246,6 +258,13 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:currentMatchPosition = get(l:options, 'currentMatchPosition', [])
     let l:Echo = get(l:options, 'EchoFunction', 'SearchSpecial#Echo')
     let l:Error = get(l:options, 'ErrorFunction', 'SearchSpecial#ErrorMessage')
+
+    let l:BeforeFirstSearchAction = get(l:options, 'BeforeFirstSearchAction', '')
+    let l:AfterFirstSearchAction = get(l:options, 'AfterFirstSearchAction', '')
+    if ! empty(l:BeforeFirstSearchAction)
+	call ingo#actions#ExecuteOrFunc(l:BeforeFirstSearchAction)
+    endif
+
     let l:isStarSearch = get(l:options, 'isStarSearch', 0)
     if l:isStarSearch
 	let l:save_smartcase = &smartcase
@@ -316,6 +335,12 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 		let l:isExcludedMatch = 1
 	    endif
 	endwhile
+
+	if ! empty(l:AfterFirstSearchAction)
+	    call ingo#actions#ExecuteOrFunc(l:AfterFirstSearchAction)
+	    let l:AfterFirstSearchAction = ''
+	endif
+
 	if l:line > 0
 	    " We found an accepted match.
 	    let l:count -= 1
