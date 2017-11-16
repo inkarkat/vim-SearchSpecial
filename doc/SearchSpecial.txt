@@ -114,6 +114,9 @@ HISTORY						       *SearchSpecial-history*
 - ENH: Allow to configure the error messages when there are no matches via
   a:options.ErrorFunction.
 - ENH: Allow to return more search information via a:options.isReturnMoreInfo.
+- ENH: Allow to run commands before and after the first search via
+  a:options.BeforeFirstSearchAction and a:options.AfterFirstSearchAction.
+  Needed for SearchManyLocations.vim.
 
 1.00	24-May-2014
 First published version.
