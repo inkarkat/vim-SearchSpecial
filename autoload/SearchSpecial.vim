@@ -7,12 +7,19 @@
 "   - ingo/msg.vim autoload script
 "   - ingo/pos.vim autoload script
 "
-" Copyright: (C) 2009-2016 Ingo Karkat
+" Copyright: (C) 2009-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.018	17-Nov-2017	ENH: Allow to run commands after each search via
+"				a:options.AfterAnySearchAction and after the
+"				final search jump via
+"				a:options.AfterFinalSearchAction. Allow to
+"				specify a:options.additionalSearchFlags. Both
+"				required for SearchAsQuickJump.vim offset
+"				enhancement.
 "   1.10.017	19-May-2016	ENH: Allow to run commands before and after the
 "				first search via
 "				a:options.BeforeFirstSearchAction and
@@ -246,6 +253,15 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    search (that satisfies the predicate) has been
 "			    performed. Only executed for the first count, not on
 "			    subsequent ones.
+"   AfterFinalSearchAction  Funcref or commands to execute after the final
+"			    search (that satisfies the predicate) has been
+"			    performed. Only executed for the final jump that
+"			    arrives on the target match, not the intermediate
+"			    jumps for counts.
+"   AfterAnySearchAction    Funcref or commands to execute after any search
+"			    (that satisfies the predicate) jump has been
+"			    performed, for all counts.
+"   additionalSearchFlags   Additional {flags} to be passed to searchpos(),
 "* RETURN VALUES:
 "   0 if pattern not found; ingo#err#Get() then has the appropriate error
 "   message, 1 if a suitable match was found and jumped to.
@@ -258,9 +274,12 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:currentMatchPosition = get(l:options, 'currentMatchPosition', [])
     let l:Echo = get(l:options, 'EchoFunction', 'SearchSpecial#Echo')
     let l:Error = get(l:options, 'ErrorFunction', 'SearchSpecial#ErrorMessage')
+    let l:additionalSearchFlags = get(l:options, 'additionalSearchFlags', '')
 
     let l:BeforeFirstSearchAction = get(l:options, 'BeforeFirstSearchAction', '')
     let l:AfterFirstSearchAction = get(l:options, 'AfterFirstSearchAction', '')
+    let l:AfterFinalSearchAction = get(l:options, 'AfterFinalSearchAction', '')
+    let l:AfterAnySearchAction = get(l:options, 'AfterAnySearchAction', '')
     if ! empty(l:BeforeFirstSearchAction)
 	call ingo#actions#ExecuteOrFunc(l:BeforeFirstSearchAction)
     endif
@@ -282,7 +301,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	" Search for the next included match while skipping excluded ones.
 	while 1
 	    " Search for next match, 'wrapscan' applies.
-	    let [l:line, l:col] = searchpos( a:searchPattern, (a:isBackward ? 'b' : '') )
+	    let [l:line, l:col] = searchpos(a:searchPattern, (a:isBackward ? 'b' : '') . l:additionalSearchFlags)
 	    if l:line == 0
 		" There are no (more) matches.
 		break
@@ -340,6 +359,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	    call ingo#actions#ExecuteOrFunc(l:AfterFirstSearchAction)
 	    let l:AfterFirstSearchAction = ''
 	endif
+	if ! empty(l:AfterAnySearchAction)
+	    call ingo#actions#ExecuteOrFunc(l:AfterAnySearchAction)
+	endif
 
 	if l:line > 0
 	    " We found an accepted match.
@@ -360,6 +382,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     let l:isFound = (l:line > 0)
     if l:isFound
+	if ! empty(l:AfterFinalSearchAction)
+	    call ingo#actions#ExecuteOrFunc(l:AfterFinalSearchAction)
+	endif
+
 	let l:matchPosition = getpos('.')
 
 	if ! get(l:options, 'keepfolds', 0)
