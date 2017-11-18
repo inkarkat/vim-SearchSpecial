@@ -117,6 +117,11 @@ HISTORY						       *SearchSpecial-history*
 - ENH: Allow to run commands before and after the first search via
   a:options.BeforeFirstSearchAction and a:options.AfterFirstSearchAction.
   Needed for SearchManyLocations.vim.
+- ENH: Allow to run commands after each search via
+  a:options.AfterAnySearchAction and after the final search jump via
+  a:options.AfterFinalSearchAction. Allow to specify
+  a:options.additionalSearchFlags. Both required for SearchAsQuickJump.vim
+  offset enhancement.
 
 1.00	24-May-2014
 First published version.
@@ -125,7 +130,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2016 Ingo Karkat
+Copyright: (C) 2009-2017 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
