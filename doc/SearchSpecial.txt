@@ -30,29 +30,27 @@ SEE ALSO								     *
 
 The following custom searches use this plugin:
 
-SearchAlternateStar:	    Alternate star "*" search for the word nearest to
-			    the cursor.
-SearchAsQuickJump:	    Quick search without affecting 'hlsearch', search
-			    pattern and history.
-SearchFoldsWithoutOpening:  Show search results in closed folds without
-			    opening them.
-SearchForExpr:		    Search where pattern matches and a passed
-			    expression evaluates to true.
-SearchInSyntax:		    Skip matches in a particular syntax item when
-			    jumping to the next search result.
-SearchInView:		    Search for next match inside / outside the
-			    currently visible view.
-SearchLineOnce:		    Skip multiple matches in a line when jumping to
-			    the next search result.
-SearchWithInv:		    Search for next match with inverted wrapscan /
-			    ignorecase settings.
-SearchWithoutClosedFolds:   Skip closed folds when jumping to the next search
-			    result.
-SearchWithoutFoldedBeyondLines: Skip folded lines except the first when
-			    jumping to the next search result.
-
-RELATED WORKS								     *
-(Alternatives from other authors, other approaches, references not used here.)
+- SearchAlternateStar (vimscript #0000):
+  Alternate star "*" search for the word nearest to the cursor.
+- SearchAsQuickJump (vimscript #0000):
+  Quick search without affecting 'hlsearch', search pattern and history.
+- SearchFoldsWithoutOpening (vimscript #0000):
+  Show search results in closed folds without opening them.
+- SearchForExpr (vimscript #0000):
+  Search where pattern matches and a passed expression evaluates to true.
+- SearchInSyntax (vimscript #0000):
+  Skip matches in a particular syntax item when jumping to the next search
+  result.
+- SearchInView (vimscript #0000):
+  Search for next match inside / outside the currently visible view.
+- SearchLineOnce (vimscript #0000):
+  Skip multiple matches in a line when jumping to the next search result.
+- SearchWithInv (vimscript #0000):
+  Search for next match with inverted wrapscan / ignorecase settings.
+- SearchWithoutClosedFolds (vimscript #0000):
+  Skip closed folds when jumping to the next search result.
+- SearchWithoutFoldedBeyondLines (vimscript #0000):
+  Skip folded lines except the first when jumping to the next search result.
 
 ==============================================================================
 USAGE							 *SearchSpecial-usage*
