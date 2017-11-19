@@ -2,13 +2,10 @@
 "
 " DEPENDENCIES:
 "
-" Copyright: (C) 2009-2014 Ingo Karkat
+" Copyright: (C) 2009-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   1.00.001	12-Jul-2009	file creation
 
 function! SearchSpecial#CWord#GetStartPosition( pattern )
 "*******************************************************************************

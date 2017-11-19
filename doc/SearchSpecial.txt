@@ -30,26 +30,26 @@ SEE ALSO								     *
 
 The following custom searches use this plugin:
 
-- SearchAlternateStar (vimscript #0000):
+- |SearchAlternateStar.vim| (vimscript #0000):
   Alternate star "*" search for the word nearest to the cursor.
-- SearchAsQuickJump (vimscript #0000):
+- |SearchAsQuickJump.vim| (vimscript #0000):
   Quick search without affecting 'hlsearch', search pattern and history.
-- SearchFoldsWithoutOpening (vimscript #0000):
+- |SearchFoldsWithoutOpening.vim| (vimscript #0000):
   Show search results in closed folds without opening them.
-- SearchForExpr (vimscript #0000):
+- |SearchForExpr.vim| (vimscript #0000):
   Search where pattern matches and a passed expression evaluates to true.
-- SearchInSyntax (vimscript #0000):
+- |SearchInSyntax.vim| (vimscript #0000):
   Skip matches in a particular syntax item when jumping to the next search
   result.
-- SearchInView (vimscript #0000):
+- |SearchInView.vim| (vimscript #0000):
   Search for next match inside / outside the currently visible view.
-- SearchLineOnce (vimscript #0000):
+- |SearchLineOnce.vim| (vimscript #0000):
   Skip multiple matches in a line when jumping to the next search result.
-- SearchWithInv (vimscript #0000):
+- |SearchWithInv.vim| (vimscript #0000):
   Search for next match with inverted wrapscan / ignorecase settings.
-- SearchWithoutClosedFolds (vimscript #0000):
+- |SearchWithoutClosedFolds.vim| (vimscript #0000):
   Skip closed folds when jumping to the next search result.
-- SearchWithoutFoldedBeyondLines (vimscript #0000):
+- |SearchWithoutFoldedBeyondLines.vim| (vimscript #0000):
   Skip folded lines except the first when jumping to the next search result.
 
 ==============================================================================
@@ -80,10 +80,16 @@ at the end of the mapping.
 ==============================================================================
 INSTALLATION					  *SearchSpecial-installation*
 
-This script is packaged as a |vimball|. If you have the "gunzip" decompressor
-in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
-the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
-vimball or via the |:UseVimball| command. >
+The code is hosted in a Git repo at
+    https://github.com/inkarkat/vim-SearchSpecial
+You can use your favorite plugin manager, or "git clone" into a directory used
+for Vim |packages|. Releases are on the "stable" branch, the latest unstable
+development snapshot on "master".
+
+This script is also packaged as a |vimball|. If you have the "gunzip"
+decompressor in your PATH, simply edit the *.vmb.gz package in Vim; otherwise,
+decompress the archive first, e.g. using WinZip. Inside Vim, install by
+sourcing the vimball or via the |:UseVimball| command. >
     vim SearchSpecial*.vmb.gz
     :so %
 To uninstall, use the |:RmVimball| command.
@@ -103,10 +109,15 @@ TODO							  *SearchSpecial-todo*
 
 IDEAS							 *SearchSpecial-ideas*
 
+CONTRIBUTING					    *SearchSpecial-contribute*
+
+Report any bugs, send patches, or suggest features via the issue tracker at
+https://github.com/inkarkat/vim-SearchSpecial/issues or email (address below).
+
 ==============================================================================
 HISTORY						       *SearchSpecial-history*
 
-1.10	RELEASEME
+1.10	19-Nov-2017
 - ENH: Allow to configure the echoing of successful matches via
   a:options.EchoFunction.
 - ENH: Allow to configure the error messages when there are no matches via
