@@ -83,7 +83,7 @@ https://github.com/inkarkat/vim-SearchSpecial/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 1.10    RELEASEME
+##### 1.10    19-Nov-2017
 - ENH: Allow to configure the echoing of successful matches via
   a:options.EchoFunction.
 - ENH: Allow to configure the error messages when there are no matches via
