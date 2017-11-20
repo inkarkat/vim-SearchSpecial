@@ -22,6 +22,9 @@ regards to folding and jumps.
 
 The following custom searches use this plugin:
 
+- SearchAsQuickJump.vim ([vimscript #5619](http://www.vim.org/scripts/script.php?script_id=5619)):
+  Quick search without affecting 'hlsearch', search pattern and history.
+
 USAGE
 ------------------------------------------------------------------------------
 
