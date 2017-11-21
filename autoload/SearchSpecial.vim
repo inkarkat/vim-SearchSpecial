@@ -177,14 +177,15 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:AfterFinalSearchAction = get(l:options, 'AfterFinalSearchAction', '')
     let l:AfterAnySearchAction = get(l:options, 'AfterAnySearchAction', '')
 
-    if a:searchPattern ==# @/ && empty(l:AfterFinalSearchAction) && get(l:options, 'isAutoOffset', 1)
+    if a:searchPattern ==# @/ &&
+    \   get(l:options, 'isAutoOffset', 1)
 	" DWIM: Extract search offset from the last search history element and
 	" apply it after the last jump.
 	let l:lastSearch = histget('search', -1)
 	if ingo#str#StartsWith(l:lastSearch, @/)
 	    let l:searchOffset = strpart(l:lastSearch, len(@/) + 1)
 	    if ! empty(l:searchOffset)
-		let [l:offsetSearchFlags, l:AfterFinalSearchAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
+		let [l:offsetSearchFlags, l:BeforeFirstSearchAction, l:AfterFinalSearchAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
 		let l:additionalSearchFlags .= l:offsetSearchFlags
 	    endif
 	endif
