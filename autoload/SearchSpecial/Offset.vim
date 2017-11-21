@@ -9,6 +9,8 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+let s:offsetExpr =  '\([esb]\)\?\%(\([+-]\?\)\(\d*\)\)'
+
 function! SearchSpecial#Offset#GetAction( offset )
     if empty(a:offset)
 	return ['', '', '']
@@ -16,7 +18,7 @@ function! SearchSpecial#Offset#GetAction( offset )
 	return s:GetSecondSearchAction(a:offset[1:])
     endif
 
-    let [l:anchor, l:sign, l:count] = matchlist(a:offset, '^\([esb]\)\?\%(\([+-]\?\)\(\d*\)\)')[1:3]
+    let [l:anchor, l:sign, l:count] = matchlist(a:offset, '^' . s:offsetExpr)[1:3]
     let l:count = (empty(l:count) ? 0 : str2nr(l:count))
     let l:count1 = max([1, l:count])
     let l:isBackward = (l:sign ==# '-')
@@ -42,8 +44,43 @@ function! s:GetBackwardOffset( count )
     return (a:count < 1 ? '' : printf('call search("\\_.\\{,%d\\}\\%%#", "bW")', a:count))
 endfunction
 
-function! s:GetSecondSearchAction()
-    " TODO
+function! s:GetSecondSearchAction( offset )
+    let l:remainder = a:offset
+
+    let l:commands = []
+    try
+	while ! empty(l:remainder)
+	    let [l:direction, l:pattern, l:offset, l:remainder] =
+	    \   matchlist(l:remainder, '^\([/?]\)\(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\%(\1\@!\&.\)*\)\%(\1' .
+	    \       '\(' . substitute(s:offsetExpr, '\\(', '\\%(', 'g') . '\)\?\%(;\(.*\)\)\?\)\?$'
+	    \   )[1:4]
+
+	    let l:flags = ''
+	    if ! empty(l:offset)
+		let [l:flags, l:ignored, l:offsetCommand] = SearchSpecial#Offset#GetAction(l:offset)
+	    endif
+
+	    let l:searchCommand = printf('call search(%s, %s)', string(l:pattern), string(l:flags . (l:direction ==# '?' ? 'b' : '')))
+	    call add(l:commands, l:searchCommand)
+	    if ! empty(l:offset) | call add(l:commands, l:offsetCommand) | endif
+	endwhile
+    catch /^Vim\%((\a\+)\)\=:E688:/ " E688: More targets than List items
+	" Stop iterating on invalid search.
+    finally
+	" With a simple command concatenation with "|", a failing search would
+	" not stop further searches. To achieve that, turn the commands into a
+	" (lazily evaluated) expression of and-ed branches, which will only be
+	" evaluated until the first search returns 0. A little complication is
+	" that the offset commands are either search(), which returns 0 on
+	" failure, or cursor(), which returns 0 on success.
+	return 'let dummy = ' . join(
+	\   map(
+	\       l:commands,
+	\       'substitute(v:val, "^call \\ze\\(\\w\\+\\)", "\\=(submatch(1) ==# \"cursor\" ? \"!\" : \"\")", "")'
+	\   ),
+	\   ' && '
+	\)
+    endtry
 endfunction
 
 let &cpo = s:save_cpo
