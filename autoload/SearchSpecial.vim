@@ -173,8 +173,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:additionalSearchFlags = get(l:options, 'additionalSearchFlags', '')
 
     let l:BeforeFirstSearchAction = get(l:options, 'BeforeFirstSearchAction', '')
+    let l:BeforeFirstSearchInternalAction = ''
     let l:AfterFirstSearchAction = get(l:options, 'AfterFirstSearchAction', '')
     let l:AfterFinalSearchAction = get(l:options, 'AfterFinalSearchAction', '')
+    let l:AfterFinalSearchInternalAction = ''
     let l:AfterAnySearchAction = get(l:options, 'AfterAnySearchAction', '')
 
     if a:searchPattern ==# @/ &&
@@ -185,7 +187,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	if ingo#str#StartsWith(l:lastSearch, @/)
 	    let l:searchOffset = strpart(l:lastSearch, len(@/) + 1)
 	    if ! empty(l:searchOffset)
-		let [l:offsetSearchFlags, l:BeforeFirstSearchAction, l:AfterFinalSearchAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
+		let [l:offsetSearchFlags, l:BeforeFirstSearchInternalAction, l:AfterFinalSearchInternalAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
 		let l:additionalSearchFlags .= l:offsetSearchFlags
 	    endif
 	endif
@@ -194,6 +196,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     if ! empty(l:BeforeFirstSearchAction)
 	call ingo#actions#ExecuteOrFunc(l:BeforeFirstSearchAction)
+    endif
+    if ! empty(l:BeforeFirstSearchInternalAction)
+	call ingo#actions#ExecuteOrFunc(l:BeforeFirstSearchInternalAction)
     endif
 
     let l:isStarSearch = get(l:options, 'isStarSearch', 0)
@@ -294,6 +299,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     let l:isFound = (l:line > 0)
     if l:isFound
+	if ! empty(l:AfterFinalSearchInternalAction)
+	    call ingo#actions#ExecuteOrFunc(l:AfterFinalSearchInternalAction)
+	endif
 	if ! empty(l:AfterFinalSearchAction)
 	    call ingo#actions#ExecuteOrFunc(l:AfterFinalSearchAction)
 	endif
