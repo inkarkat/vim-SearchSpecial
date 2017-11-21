@@ -154,6 +154,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    (that satisfies the predicate) jump has been
 "			    performed, for all counts.
 "   additionalSearchFlags   Additional {flags} to be passed to searchpos(),
+"   isAutoOffset            Flag (default on)  whether a search offset is
+"			    automatically extracted from the search history (if
+"			    a:searchPattern is equal to the last search
+"			    register) and applied in the search.
 "* RETURN VALUES:
 "   0 if pattern not found; ingo#err#Get() then has the appropriate error
 "   message, 1 if a suitable match was found and jumped to.
@@ -172,6 +176,21 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:AfterFirstSearchAction = get(l:options, 'AfterFirstSearchAction', '')
     let l:AfterFinalSearchAction = get(l:options, 'AfterFinalSearchAction', '')
     let l:AfterAnySearchAction = get(l:options, 'AfterAnySearchAction', '')
+
+    if a:searchPattern ==# @/ && empty(l:AfterFinalSearchAction) && get(l:options, 'isAutoOffset', 1)
+	" DWIM: Extract search offset from the last search history element and
+	" apply it after the last jump.
+	let l:lastSearch = histget('search', -1)
+	if ingo#str#StartsWith(l:lastSearch, @/)
+	    let l:searchOffset = strpart(l:lastSearch, len(@/) + 1)
+	    if ! empty(l:searchOffset)
+		let [l:offsetSearchFlags, l:AfterFinalSearchAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
+		let l:additionalSearchFlags .= l:offsetSearchFlags
+	    endif
+	endif
+    endif
+
+
     if ! empty(l:BeforeFirstSearchAction)
 	call ingo#actions#ExecuteOrFunc(l:BeforeFirstSearchAction)
     endif
