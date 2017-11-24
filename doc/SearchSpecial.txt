@@ -45,6 +45,8 @@ The following custom searches use this plugin:
   Search for next match inside / outside the currently visible view.
 - |SearchLineOnce.vim| (vimscript #0000):
   Skip multiple matches in a line when jumping to the next search result.
+- |SearchPatternExpression.vim| (vimscript #0000):
+  Dynamically adapt the search pattern on each jump (and events).
 - |SearchWithInv.vim| (vimscript #0000):
   Search for next match with inverted wrapscan / ignorecase settings.
 - |SearchWithoutClosedFolds.vim| (vimscript #0000):
