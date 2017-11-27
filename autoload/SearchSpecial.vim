@@ -174,8 +174,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    (that satisfies the predicate) jump has been
 "			    performed, for all counts.
 "   additionalSearchFlags   Additional {flags} to be passed to searchpos(),
-"   isAutoOffset            Flag (default on)  whether a search offset is
-"			    automatically extracted from the search history (if
+"   searchOffset            A |search-offset| that is applied after a jump.
+"			    Ignored when a:isAutoOffset is set explicitly.
+"   isAutoOffset            Flag (default on unless a:options.searchOffset is
+"			    given) whether a search offset is automatically
+"			    extracted from the search history (if
 "			    a:searchPattern is equal to the last search
 "			    register) and applied in the search.
 "* RETURN VALUES:
@@ -198,16 +201,17 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:AfterFinalSearchAction = get(l:options, 'AfterFinalSearchAction', '')
     let l:AfterFinalSearchInternalAction = ''
     let l:AfterAnySearchAction = get(l:options, 'AfterAnySearchAction', '')
-    let l:searchOffset = ''
 
-    if get(l:options, 'isAutoOffset', 1)
+    if get(l:options, 'isAutoOffset', ! has_key(l:options, 'searchOffset'))
 	" DWIM: Extract search offset from the last search history element and
 	" apply it after the last jump.
 	let l:searchOffset = SearchSpecial#DetermineCurrentOffset(a:searchPattern)
-	if ! empty(l:searchOffset)
-	    let [l:offsetSearchFlags, l:BeforeFirstSearchInternalAction, l:AfterFinalSearchInternalAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
-	    let l:additionalSearchFlags .= l:offsetSearchFlags
-	endif
+    else
+	let l:searchOffset = get(l:options, 'searchOffset', '')
+    endif
+    if ! empty(l:searchOffset)
+	let [l:offsetSearchFlags, l:BeforeFirstSearchInternalAction, l:AfterFinalSearchInternalAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
+	let l:additionalSearchFlags .= l:offsetSearchFlags
     endif
 
 

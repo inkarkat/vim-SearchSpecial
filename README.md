@@ -93,6 +93,10 @@ HISTORY
   implementation even handles another search (//;), even though this is only
   considered for an initial search, not for subsequent searches (only the last
   pattern is stored in @/, not the full search sequence).
+- a:options.EchoFunction and a:options.ErrorFunction now get supplied
+  a:searchPattern which is either a String of a List of [searchPattern,
+  searchOffset] if such is specified (via a:options.isAutoOffset).
+- ENH: Add a:options.searchOffset to allow clients set the search offset.
 
 ##### 1.10    19-Nov-2017
 - ENH: Allow to configure the echoing of successful matches via
