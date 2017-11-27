@@ -50,42 +50,51 @@ function! s:GetBackwardOffset( count )
 endfunction
 
 function! s:GetSecondSearchAction( offset )
+    if empty(a:offset) | return '' | endif
     let l:remainder = a:offset
 
     let l:commands = []
-    try
-	while ! empty(l:remainder)
-	    let [l:direction, l:pattern, l:offset, l:remainder] =
-	    \   matchlist(l:remainder, '^\([/?]\)\(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\%(\1\@!\&.\)*\)\%(\1' .
-	    \       '\(' . substitute(s:offsetExpr, '\\(', '\\%(', 'g') . '\)\?\%(;\(.*\)\)\?\)\?$'
-	    \   )[1:4]
-
-	    let l:flags = ''
-	    if ! empty(l:offset)
-		let [l:flags, l:ignored, l:offsetCommand] = SearchSpecial#Offset#GetAction(l:offset)
+    while ! empty(l:remainder)
+	let l:parse =
+	\   matchlist(l:remainder, '^\([/?]\)\(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\%(\1\@!\&.\)*\)\%(\1' .
+	\       '\(' . substitute(s:offsetExpr, '\\(', '\\%(', 'g') . '\)\?\%(;\(.*\)\)\?\)\?$'
+	\   )
+	if ! empty(l:parse)
+	    let [l:direction, l:pattern, l:offset, l:remainder] = l:parse[1:4]
+	else
+	    let l:parse =
+	    \   matchlist(l:remainder, '^\([/?]\)\(\%(\%(^\|[^\\]\)\%(\\\\\)*\\\)\@<!\%(\1\@!\&.\)*\)\%(\1.*\)\?$')
+	    if ! empty(l:parse)
+		let [l:direction, l:pattern] = l:parse[1:2]
+		let [l:offset, l:remainder] = ['', '']
+	    else
+		break
 	    endif
+	endif
 
-	    let l:searchCommand = printf('call search(%s, %s)', string(l:pattern), string(l:flags . (l:direction ==# '?' ? 'b' : '')))
-	    call add(l:commands, l:searchCommand)
-	    if ! empty(l:offset) | call add(l:commands, l:offsetCommand) | endif
-	endwhile
-    catch /^Vim\%((\a\+)\)\=:E688:/ " E688: More targets than List items
-	" Stop iterating on invalid search.
-    finally
-	" With a simple command concatenation with "|", a failing search would
-	" not stop further searches. To achieve that, turn the commands into a
-	" (lazily evaluated) expression of and-ed branches, which will only be
-	" evaluated until the first search returns 0. A little complication is
-	" that the offset commands are either search(), which returns 0 on
-	" failure, or cursor(), which returns 0 on success.
-	return 'let dummy = ' . join(
-	\   map(
-	\       l:commands,
-	\       'substitute(v:val, "^call \\ze\\(\\w\\+\\)", "\\=(submatch(1) ==# \"cursor\" ? \"!\" : \"\")", "")'
-	\   ),
-	\   ' && '
-	\)
-    endtry
+	let l:flags = ''
+	if ! empty(l:offset)
+	    let [l:flags, l:ignored, l:offsetCommand] = SearchSpecial#Offset#GetAction(l:offset)
+	endif
+
+	let l:searchCommand = printf('call search(%s, %s)', string(l:pattern), string(l:flags . (l:direction ==# '?' ? 'b' : '')))
+	call add(l:commands, l:searchCommand)
+	if ! empty(l:offset) | call add(l:commands, l:offsetCommand) | endif
+    endwhile
+
+    " With a simple command concatenation with "|", a failing search would not
+    " stop further searches. To achieve that, turn the commands into a (lazily
+    " evaluated) expression of and-ed branches, which will only be evaluated
+    " until the first search returns 0. A little complication is that the offset
+    " commands are either search(), which returns 0 on failure, or cursor(),
+    " which returns 0 on success.
+    return 'let dummy = ' . join(
+    \   map(
+    \       l:commands,
+    \       'substitute(v:val, "^call \\ze\\(\\w\\+\\)", "\\=(submatch(1) ==# \"cursor\" ? \"!\" : \"\")", "")'
+    \   ),
+    \   ' && '
+    \)
 endfunction
 
 let &cpo = s:save_cpo
