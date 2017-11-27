@@ -68,6 +68,17 @@ function! SearchSpecial#Echo( predicateId, searchPattern, isBackward, isWrapped,
     endif
 endfunction
 
+function! SearchSpecial#DetermineCurrentOffset( searchPattern )
+    if a:searchPattern ==# @/
+	let l:lastSearch = histget('search', -1)
+	if ingo#str#StartsWith(l:lastSearch, @/)
+	    return strpart(l:lastSearch, len(@/) + 1)
+	endif
+    endif
+
+    return ''
+endfunction
+
 function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateId, predicateDescription, count, ... )
 "*******************************************************************************
 "* PURPOSE:
@@ -179,17 +190,13 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:AfterFinalSearchInternalAction = ''
     let l:AfterAnySearchAction = get(l:options, 'AfterAnySearchAction', '')
 
-    if a:searchPattern ==# @/ &&
-    \   get(l:options, 'isAutoOffset', 1)
+    if get(l:options, 'isAutoOffset', 1)
 	" DWIM: Extract search offset from the last search history element and
 	" apply it after the last jump.
-	let l:lastSearch = histget('search', -1)
-	if ingo#str#StartsWith(l:lastSearch, @/)
-	    let l:searchOffset = strpart(l:lastSearch, len(@/) + 1)
-	    if ! empty(l:searchOffset)
-		let [l:offsetSearchFlags, l:BeforeFirstSearchInternalAction, l:AfterFinalSearchInternalAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
-		let l:additionalSearchFlags .= l:offsetSearchFlags
-	    endif
+	let l:searchOffset = SearchSpecial#DetermineCurrentOffset(a:searchPattern)
+	if ! empty(l:searchOffset)
+	    let [l:offsetSearchFlags, l:BeforeFirstSearchInternalAction, l:AfterFinalSearchInternalAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
+	    let l:additionalSearchFlags .= l:offsetSearchFlags
 	endif
     endif
 
