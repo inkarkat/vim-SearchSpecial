@@ -18,7 +18,12 @@ function! SearchSpecial#Offset#GetAction( offset )
 	return s:GetSecondSearchAction(a:offset[1:])
     endif
 
-    let [l:anchor, l:sign, l:count] = matchlist(a:offset, '^' . s:offsetExpr)[1:3]
+    let l:parse = matchlist(a:offset, '^' . s:offsetExpr . '$')[1:3]
+    if empty(l:parse)
+	return ['', '', '']
+    endif
+
+    let [l:anchor, l:sign, l:count] = l:parse
     let l:count = (empty(l:count) ? 0 : str2nr(l:count))
     let l:count1 = max([1, l:count])
     let l:isBackward = (l:sign ==# '-')
