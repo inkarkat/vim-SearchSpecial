@@ -1,11 +1,13 @@
 " SearchSpecial.vim: Generic functions for special search modes.
 "
 " DEPENDENCIES:
+"   - SearchSpecial/Offset.vim autoload script
 "   - ingo/actions.vim autoload script
 "   - ingo/avoidprompt.vim autoload script
 "   - ingo/err.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/pos.vim autoload script
+"   - ingo/str.vim autoload script
 "
 " Copyright: (C) 2009-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
