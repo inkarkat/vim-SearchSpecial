@@ -11,11 +11,11 @@ set cpo&vim
 
 let s:offsetExpr =  '\([esb]\)\?\%(\([+-]\?\)\(\d*\)\)'
 
-function! SearchSpecial#Offset#GetAction( offset )
+function! SearchSpecial#Offset#GetAction( offset, ... )
     if empty(a:offset)
 	return ['', '', '']
     elseif a:offset =~# '^;'
-	return s:GetSecondSearchAction(a:offset[1:])
+	return call('s:GetSecondSearchAction', [a:offset[1:]] + a:000)
     endif
 
     let l:parse = matchlist(a:offset, '^' . s:offsetExpr . '$')[1:3]
@@ -49,7 +49,7 @@ function! s:GetBackwardOffset( count )
     return (a:count < 1 ? '' : printf('call search("\\_.\\{,%d\\}\\%%#", "bW")', a:count))
 endfunction
 
-function! s:GetSecondSearchAction( offset )
+function! s:GetSecondSearchAction( offset, ... )
     if empty(a:offset) | return '' | endif
     let l:remainder = a:offset
 
@@ -67,6 +67,14 @@ function! s:GetSecondSearchAction( offset )
 	    if ! empty(l:parse)
 		let [l:direction, l:pattern] = l:parse[1:2]
 		let [l:offset, l:remainder] = ['', '']
+	    elseif a:0
+		let [l:command, l:remainder] = call(a:1, [l:remainder])
+		if empty(l:command)
+		    break
+		else
+		    call add(l:commands, l:command)
+		    continue
+		endif
 	    else
 		break
 	    endif
@@ -74,7 +82,7 @@ function! s:GetSecondSearchAction( offset )
 
 	let l:flags = ''
 	if ! empty(l:offset)
-	    let [l:flags, l:ignored, l:offsetCommand] = SearchSpecial#Offset#GetAction(l:offset)
+	    let [l:flags, l:ignored, l:offsetCommand] = call('SearchSpecial#Offset#GetAction', [l:offset] + a:000)
 	endif
 
 	let l:searchCommand = printf('call search(%s, %s)', string(l:pattern), string(l:flags . (l:direction ==# '?' ? 'b' : '')))
