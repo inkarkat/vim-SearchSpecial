@@ -15,7 +15,8 @@ function! SearchSpecial#Offset#GetAction( offset, ... )
     if empty(a:offset)
 	return ['', '', '']
     elseif a:offset =~# '^;'
-	return call('s:GetSecondSearchAction', [a:offset[1:]] + a:000)
+	let l:secondSearchAction = call('s:GetSecondSearchAction', [a:offset[1:]] + a:000)
+	return ['', '', l:secondSearchAction]
     endif
 
     let l:parse = matchlist(a:offset, '^' . s:offsetExpr . '$')[1:3]
