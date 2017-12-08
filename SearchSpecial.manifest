@@ -1,4 +1,5 @@
 autoload/SearchSpecial.vim
 autoload/SearchSpecial/CWord.vim
+autoload/SearchSpecial/Offset.vim
 plugin/SearchSpecial.vim
 doc/SearchSpecial.txt
