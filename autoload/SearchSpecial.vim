@@ -1,11 +1,13 @@
 " SearchSpecial.vim: Generic functions for special search modes.
 "
 " DEPENDENCIES:
+"   - SearchSpecial/Offset.vim autoload script
 "   - ingo/actions.vim autoload script
 "   - ingo/avoidprompt.vim autoload script
 "   - ingo/err.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/pos.vim autoload script
+"   - ingo/str.vim autoload script
 "
 " Copyright: (C) 2009-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -21,11 +23,15 @@ function! s:EchoPredicateId( predicateId )
 endfunction
 function! SearchSpecial#EchoSearchPattern( predicateId, searchPattern, isBackward )
     let l:searchIndicator = (a:isBackward ? '?' : '/')
+    let l:search = (type(a:searchPattern) == type([]) ?
+    \   l:searchIndicator . a:searchPattern[0] . l:searchIndicator . get(a:searchPattern, 1, '') :
+    \   l:searchIndicator . a:searchPattern
+    \)
     if empty(a:predicateId)
-	call ingo#avoidprompt#EchoAsSingleLine(l:searchIndicator . a:searchPattern)
+	call ingo#avoidprompt#EchoAsSingleLine(l:search)
     else
 	call s:EchoPredicateId(a:predicateId)
-	echon ingo#avoidprompt#Truncate(ingo#avoidprompt#TranslateLineBreaks(l:searchIndicator . a:searchPattern), strlen(a:predicateId))
+	echon ingo#avoidprompt#Truncate(ingo#avoidprompt#TranslateLineBreaks(l:search), strlen(a:predicateId))
     endif
 endfunction
 
@@ -66,6 +72,17 @@ function! SearchSpecial#Echo( predicateId, searchPattern, isBackward, isWrapped,
     else
 	call SearchSpecial#EchoSearchPattern(a:predicateId, a:searchPattern, a:isBackward)
     endif
+endfunction
+
+function! SearchSpecial#DetermineCurrentOffset( searchPattern )
+    if a:searchPattern ==# @/
+	let l:lastSearch = histget('search', -1)
+	if ingo#str#StartsWith(l:lastSearch, @/)
+	    return strpart(l:lastSearch, len(@/) + 1)
+	endif
+    endif
+
+    return ''
 endfunction
 
 function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, predicateId, predicateDescription, count, ... )
@@ -130,11 +147,16 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "   EchoFunction            Funcref to a function that gets passed (predicateId,
 "			    searchPattern, isBackward, isWrapped, lnum, col)
 "			    when the current successful match should be echoed.
+"			    Note: a:searchPattern is either a String of a List
+"			    of [searchPattern, searchOffset] if such is
+"			    specified (via a:options.isAutoOffset).
 "   ErrorFunction	    Funcref to a function that gets passed
 "			    (searchPattern, isBackward) in case of no matches at
 "			    all, and (searchPattern, isBackward,
 "			    predicateDescription) in case of no matches selected
 "			    by the predicate.
+"			    Note: For a:searchPattern, see above
+"			    a:options.EchoFunction.
 "   isReturnMoreInfo        Flag to return Dictionary of {
 "				'isFound': Boolean,
 "				'remainingCount': number of matches not found
@@ -154,6 +176,13 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    (that satisfies the predicate) jump has been
 "			    performed, for all counts.
 "   additionalSearchFlags   Additional {flags} to be passed to searchpos(),
+"   searchOffset            A |search-offset| that is applied after a jump.
+"			    Ignored when a:isAutoOffset is set explicitly.
+"   isAutoOffset            Flag (default on unless a:options.searchOffset is
+"			    given) whether a search offset is automatically
+"			    extracted from the search history (if
+"			    a:searchPattern is equal to the last search
+"			    register) and applied in the search.
 "* RETURN VALUES:
 "   0 if pattern not found; ingo#err#Get() then has the appropriate error
 "   message, 1 if a suitable match was found and jumped to.
@@ -169,11 +198,30 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
     let l:additionalSearchFlags = get(l:options, 'additionalSearchFlags', '')
 
     let l:BeforeFirstSearchAction = get(l:options, 'BeforeFirstSearchAction', '')
+    let l:BeforeFirstSearchInternalAction = ''
     let l:AfterFirstSearchAction = get(l:options, 'AfterFirstSearchAction', '')
     let l:AfterFinalSearchAction = get(l:options, 'AfterFinalSearchAction', '')
+    let l:AfterFinalSearchInternalAction = ''
     let l:AfterAnySearchAction = get(l:options, 'AfterAnySearchAction', '')
+
+    if get(l:options, 'isAutoOffset', ! has_key(l:options, 'searchOffset'))
+	" DWIM: Extract search offset from the last search history element and
+	" apply it after the last jump.
+	let l:searchOffset = SearchSpecial#DetermineCurrentOffset(a:searchPattern)
+    else
+	let l:searchOffset = get(l:options, 'searchOffset', '')
+    endif
+    if ! empty(l:searchOffset)
+	let [l:offsetSearchFlags, l:BeforeFirstSearchInternalAction, l:AfterFinalSearchInternalAction] = SearchSpecial#Offset#GetAction(l:searchOffset)
+	let l:additionalSearchFlags .= l:offsetSearchFlags
+    endif
+
+
     if ! empty(l:BeforeFirstSearchAction)
 	call ingo#actions#ExecuteOrFunc(l:BeforeFirstSearchAction)
+    endif
+    if ! empty(l:BeforeFirstSearchInternalAction)
+	call ingo#actions#ExecuteOrFunc(l:BeforeFirstSearchInternalAction)
     endif
 
     let l:isStarSearch = get(l:options, 'isStarSearch', 0)
@@ -274,6 +322,9 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     let l:isFound = (l:line > 0)
     if l:isFound
+	if ! empty(l:AfterFinalSearchInternalAction)
+	    call ingo#actions#ExecuteOrFunc(l:AfterFinalSearchInternalAction)
+	endif
 	if ! empty(l:AfterFinalSearchAction)
 	    call ingo#actions#ExecuteOrFunc(l:AfterFinalSearchAction)
 	endif
@@ -303,7 +354,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	call setpos('.', l:matchPosition)
 
-	call call(l:Echo, [a:predicateId, a:searchPattern, a:isBackward, l:isWrapped, l:line, l:matchPosition[2]])
+	call call(l:Echo, [a:predicateId, (empty(l:searchOffset) ? a:searchPattern : [a:searchPattern, l:searchOffset]), a:isBackward, l:isWrapped, l:line, l:matchPosition[2]])
     else
 	" The view may have been changed by moving through unsuitable matches.
 	" Restore the view to the state before the search.
@@ -312,11 +363,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	if l:isExcludedMatch && ! empty(a:predicateDescription)
 	    " Notify that there is no a:count'th predicate match; this implies
 	    " that there *are* matches at positions excluded by the predicate.
-	    call call(l:Error, [a:searchPattern, a:isBackward, a:predicateDescription])
+	    call call(l:Error, [(empty(l:searchOffset) ? a:searchPattern : [a:searchPattern, l:searchOffset]), a:isBackward, a:predicateDescription])
 	else
 	    " No matches at all; show the common error message without
 	    " mentioning the predicate.
-	    call call(l:Error, [a:searchPattern, a:isBackward])
+	    call call(l:Error, [(empty(l:searchOffset) ? a:searchPattern : [a:searchPattern, l:searchOffset]), a:isBackward])
 	endif
     endif
 

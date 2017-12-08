@@ -22,6 +22,9 @@ regards to folding and jumps.
 
 The following custom searches use this plugin:
 
+- SearchAsQuickJump.vim ([vimscript #5619](http://www.vim.org/scripts/script.php?script_id=5619)):
+  Quick search without affecting 'hlsearch', search pattern and history.
+
 USAGE
 ------------------------------------------------------------------------------
 
@@ -82,6 +85,18 @@ https://github.com/inkarkat/vim-SearchSpecial/issues or email (address below).
 
 HISTORY
 ------------------------------------------------------------------------------
+
+##### 1.20    08-Dec-2017
+- ENH: Extract search {offset} from the last search history element and apply
+  it after jumping if the passed a:searchPattern is also the last element in
+  the history. This can be turned off via a:options.isAutoOffset. The
+  implementation even handles another search (//;), even though this is only
+  considered for an initial search, not for subsequent searches (only the last
+  pattern is stored in @/, not the full search sequence).
+- a:options.EchoFunction and a:options.ErrorFunction now get supplied
+  a:searchPattern which is either a String of a List of [searchPattern,
+  searchOffset] if such is specified (via a:options.isAutoOffset).
+- ENH: Add a:options.searchOffset to allow clients set the search offset.
 
 ##### 1.10    19-Nov-2017
 - ENH: Allow to configure the echoing of successful matches via
