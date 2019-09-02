@@ -162,8 +162,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "                           a:predicateId (as "(N skipped)") when announcing a
 "                           successful match. Default is false.
 "   isReturnMoreInfo        Flag to return Dictionary of {
-"				'isFound': Boolean,
-"				'remainingCount': number of matches not found
+"				'isFound':          Boolean,
+"				'remainingCount':   number of matches not found,
+"				'excludedMatchCnt': number of matches skipped by
+"                                                   a:Predicate,
 "			    }
 "   BeforeFirstSearchAction Funcref or commands to execute before the first
 "			    search is performed.
@@ -385,7 +387,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	let &smartcase = l:save_smartcase
     endif
 
-    return (get(l:options, 'isReturnMoreInfo', 0) ? {'isFound': l:isFound, 'remainingCount': l:count} : l:isFound)
+    return (get(l:options, 'isReturnMoreInfo', 0) ? {
+    \   'isFound': l:isFound,
+    \   'remainingCount': l:count,
+    \   'excludedMatchCnt': l:excludedMatchCnt
+    \} : l:isFound)
 endfunction
 
 let &cpo = s:save_cpo
