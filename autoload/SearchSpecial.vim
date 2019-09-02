@@ -9,7 +9,7 @@
 "   - ingo/pos.vim autoload script
 "   - ingo/str.vim autoload script
 "
-" Copyright: (C) 2009-2017 Ingo Karkat
+" Copyright: (C) 2009-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -157,6 +157,10 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 "			    by the predicate.
 "			    Note: For a:searchPattern, see above
 "			    a:options.EchoFunction.
+"   isShowPredicateSkips    Flag whether the number of matches where a:Predicate
+"                           excluded a match should be added to the
+"                           a:predicateId (as "(N skipped)") when announcing a
+"                           successful match. Default is false.
 "   isReturnMoreInfo        Flag to return Dictionary of {
 "				'isFound': Boolean,
 "				'remainingCount': number of matches not found
@@ -232,6 +236,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
     let l:isWrapped = 0
     let l:isExcludedMatch = 0
+    let l:excludedMatchCnt = 0
 
     while l:count > 0
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
@@ -292,6 +297,7 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 	    else
 		" This match is rejected, continue searching.
 		let l:isExcludedMatch = 1
+		let l:excludedMatchCnt += 1
 	    endif
 	endwhile
 
@@ -354,7 +360,11 @@ function! SearchSpecial#SearchWithout( searchPattern, isBackward, Predicate, pre
 
 	call setpos('.', l:matchPosition)
 
-	call call(l:Echo, [a:predicateId, (empty(l:searchOffset) ? a:searchPattern : [a:searchPattern, l:searchOffset]), a:isBackward, l:isWrapped, l:line, l:matchPosition[2]])
+	let l:predicateId = a:predicateId
+	if get(l:options, 'isShowPredicateSkips', 0) && l:excludedMatchCnt > 0
+	    let l:predicateId = printf('%s (%d skipped)', empty(l:predicateId) ? 'search' : l:predicateId, l:excludedMatchCnt)
+	endif
+	call call(l:Echo, [l:predicateId, (empty(l:searchOffset) ? a:searchPattern : [a:searchPattern, l:searchOffset]), a:isBackward, l:isWrapped, l:line, l:matchPosition[2]])
     else
 	" The view may have been changed by moving through unsuitable matches.
 	" Restore the view to the state before the search.

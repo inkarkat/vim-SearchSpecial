@@ -1,4 +1,4 @@
-SEARCH SPECIAL   
+SEARCH SPECIAL
 ===============================================================================
 _by Ingo Karkat_
 
@@ -86,6 +86,13 @@ https://github.com/inkarkat/vim-SearchSpecial/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
+##### 1.21    RELEASEME
+- Add a:options.isShowPredicateSkips flag to include the number of skipped
+  matches in the predicate prefix. Depending on the type of a:Predicate, this
+  information can be useful to the user, and handling this here avoids
+  cumbersome counting and overriding of a:EchoFunction inside the client
+  plugin.
+
 ##### 1.20    08-Dec-2017
 - ENH: Extract search {offset} from the last search history element and apply
   it after jumping if the passed a:searchPattern is also the last element in
@@ -120,7 +127,7 @@ HISTORY
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2009-2017 Ingo Karkat -
+Copyright: (C) 2009-2019 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
-Maintainer:     Ingo Karkat <ingo@karkat.de>
+Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
