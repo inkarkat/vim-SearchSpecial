@@ -47,6 +47,8 @@ The following custom searches use this plugin:
   Skip multiple matches in a line when jumping to the next search result.
 - |SearchLineOnceKeepColumn.vim| (vimscript #0000):
   Jump to the current column in every line that has matches.
+- |SearchNoHorizontalScroll.vim|((vimscript #0000):
+  Skip matches that would cause horizontall scrolling to show them.
 - |SearchOffset.vim| (vimscript #0000):
   Apply another search or motion after jumping to matches.
 - |SearchPatternExpression.vim| (vimscript #0000):
@@ -157,7 +159,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2017 Ingo Karkat
+Copyright: (C) 2009-2019 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
