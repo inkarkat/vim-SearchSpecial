@@ -53,6 +53,8 @@ The following custom searches use this plugin:
   Apply another search or motion after jumping to matches.
 - |SearchPatternExpression.vim| (vimscript #0000):
   Dynamically adapt the search pattern on each jump (and events).
+- |SearchWithAction.vim| (vimscript #0000):
+  Execute a command after jumping to match (or failing to do so).
 - |SearchWithInv.vim| (vimscript #0000):
   Search for next match with inverted wrapscan / ignorecase settings.
 - |SearchWithoutClosedFolds.vim| (vimscript #0000):
