@@ -34,6 +34,8 @@ The following custom searches use this plugin:
   Alternate star "*" search for the word nearest to the cursor.
 - |SearchAsQuickJump.vim| (vimscript #5619):
   Quick search without affecting 'hlsearch', search pattern and history.
+- |SearchFoldsOnce.vim| (vimscript #0000):
+  Show only one unique search result in closed folds.
 - |SearchFoldsWithoutOpening.vim| (vimscript #0000):
   Show search results in closed folds without opening them.
 - |SearchForExpr.vim| (vimscript #0000):
@@ -168,7 +170,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2019 Ingo Karkat
+Copyright: (C) 2009-2022 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
