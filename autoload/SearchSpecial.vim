@@ -9,7 +9,7 @@
 "   - ingo/pos.vim autoload script
 "   - ingo/str.vim autoload script
 "
-" Copyright: (C) 2009-2019 Ingo Karkat
+" Copyright: (C) 2009-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -53,7 +53,7 @@ function! SearchSpecial#ErrorMessage( searchPattern, isBackward, ... )
 	let l:errorMessage = printf('%sPattern not found%s: %s',
 	\   (l:hasDescription ? '' : 'E486: '),
 	\   l:searchDescription,
-	\   a:searchPattern
+	\   (type(a:searchPattern) == type([]) ? a:searchPattern[0] : a:searchPattern)
 	\)
     else
 	let l:errorMessage = printf('%ssearch%s hit %s without match for: %s',

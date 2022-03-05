@@ -92,6 +92,8 @@ HISTORY
   information can be useful to the user, and handling this here avoids
   cumbersome counting and overriding of a:EchoFunction inside the client
   plugin.
+- BUG: A search error when a search offset is used prints the literal List
+  [{pattern}, {offset}] instead of just {pattern}.
 
 ##### 1.20    08-Dec-2017
 - ENH: Extract search {offset} from the last search history element and apply
@@ -127,7 +129,7 @@ HISTORY
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2009-2019 Ingo Karkat -
+Copyright: (C) 2009-2022 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
